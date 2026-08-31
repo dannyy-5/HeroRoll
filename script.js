@@ -371,11 +371,32 @@ function battleCode() {
     return;
   }
 
-  highestPowerEver = -1;
+  const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const ownBest = savedState.strongestHero;
+  if (!ownBest || !ownBest.name || ownBest.name === '-') {
+    if (result) result.textContent = 'Roll a hero first so they can enter the battle.';
+    return;
+  }
+
+  const savedHighestPower = highestPowerEver;
+  const savedHistory = historyEntries;
   finalizeCharacter(seed);
-  const importedPower = Number(document.getElementById('eq-power').innerText) || 0;
+  const opponent = {
+    name: document.getElementById('hero-name').innerText,
+    power: Number(document.getElementById('total-power').innerText) || 0
+  };
+
+  highestPowerEver = savedHighestPower;
+  historyEntries = savedHistory;
+  if (savedState.currentHero) renderHeroCard(savedState.currentHero);
+  renderStrongestHero(ownBest);
+  renderHistoryPage();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedState));
+
+  const ownPower = Number(ownBest.power) || 0;
+  const outcome = ownPower === opponent.power ? 'Draw' : ownPower > opponent.power ? 'You win' : 'They win';
   if (result) {
-    result.textContent = `Hero summoned: ${formatHeroCode(seed)} | Power ${importedPower}`;
+    result.textContent = `${outcome}: ${ownBest.name} ${ownPower} vs ${opponent.name} ${opponent.power}`;
   }
   input.value = formatHeroCode(seed);
 }
@@ -693,7 +714,7 @@ document.getElementById('hero-code-input')?.addEventListener('input', (event) =>
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.key === 'Tab' && !event.shiftKey) {
+  if (event.key === '`' || event.key === '~') {
     event.preventDefault();
     toggleCodePage();
   }
