@@ -86,6 +86,7 @@ const classesData = [
 let isRolling = false;
 let highestPowerEver = 0;
 let historyEntries = [];
+let rollingPreviewEntry = null;
 
 const canvas = document.getElementById('diceCanvas');
 const ctx = canvas.getContext('2d');
@@ -321,23 +322,53 @@ class BirdEyeDice {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.size = 22;
+    this.size = 20;
     this.vx = (Math.random() * 12) - 6;
     this.vy = -(Math.random() * 10 + 9);
-    this.angle = Math.random() * Math.PI * 2;
+    this.rotationX = Math.random() * Math.PI * 2;
+    this.rotationY = Math.random() * Math.PI * 2;
+    this.rotationZ = Math.random() * Math.PI * 2;
+    this.spinX = (Math.random() * 0.45) - 0.22;
+    this.spinY = (Math.random() * 0.45) - 0.22;
     this.spinZ = (Math.random() * 0.9) - 0.45;
-    this.height = 0;
     this.gravity = 0.72;
-    this.currentValue = Math.floor(Math.random() * 6) + 1;
     this.groundY = canvas.height - 18;
+    this.currentValue = Math.floor(Math.random() * 6) + 1;
     this.isSettled = false;
+    this.valueFace = this.currentValue;
+    this.depth = 0;
+  }
+
+  rotatePoint(point) {
+    const { x, y, z } = point;
+    let rx = x;
+    let ry = y * Math.cos(this.rotationX) - z * Math.sin(this.rotationX);
+    let rz = y * Math.sin(this.rotationX) + z * Math.cos(this.rotationX);
+    let x2 = rx * Math.cos(this.rotationY) + rz * Math.sin(this.rotationY);
+    let z2 = -rx * Math.sin(this.rotationY) + rz * Math.cos(this.rotationY);
+    let x3 = x2 * Math.cos(this.rotationZ) - ry * Math.sin(this.rotationZ);
+    let y3 = x2 * Math.sin(this.rotationZ) + ry * Math.cos(this.rotationZ);
+    return { x: x3, y: y3, z: z2 };
+  }
+
+  project(point) {
+    const camera = 280;
+    const scale = camera / (camera - point.z);
+    return {
+      x: this.x + point.x * scale * this.size,
+      y: this.y + point.y * scale * this.size,
+      z: point.z,
+      scale
+    };
   }
 
   update() {
     this.x += this.vx;
     this.y += this.vy;
     this.vy += this.gravity;
-    this.angle += this.spinZ;
+    this.rotationX += this.spinX;
+    this.rotationY += this.spinY;
+    this.rotationZ += this.spinZ;
 
     if (this.x < this.size) {
       this.x = this.size;
@@ -350,108 +381,77 @@ class BirdEyeDice {
 
     if (this.y >= this.groundY) {
       this.y = this.groundY;
-      this.vy *= -0.42;
-      this.vx *= 0.96;
-      this.spinZ *= 0.8;
+      this.vy *= -0.46;
+      this.vx *= 0.98;
+      this.spinZ *= 0.84;
       this.currentValue = Math.floor(Math.random() * 6) + 1;
-
-      if (Math.abs(this.vy) < 0.75) {
+      if (Math.abs(this.vy) < 0.8) {
         this.vy = 0;
         this.isSettled = true;
       }
     }
 
-    this.height = Math.max(0, this.groundY - this.y);
+    this.depth = this.y;
   }
 
   draw() {
-    const s = this.size;
-    const x = this.x;
-    const y = this.y;
-    const lift = this.height * 0.55;
+    const size = this.size;
+    const verts = [
+      { x: -1, y: -1, z: -1 },
+      { x: 1, y: -1, z: -1 },
+      { x: 1, y: 1, z: -1 },
+      { x: -1, y: 1, z: -1 },
+      { x: -1, y: -1, z: 1 },
+      { x: 1, y: -1, z: 1 },
+      { x: 1, y: 1, z: 1 },
+      { x: -1, y: 1, z: 1 }
+    ].map((v) => this.rotatePoint(v));
+
+    const faces = [
+      { indices: [0, 1, 2, 3], color: '#f7c84b', label: '4' },
+      { indices: [1, 5, 6, 2], color: '#d93b2f', label: '5' },
+      { indices: [5, 4, 7, 6], color: '#5fe3d7', label: '2' },
+      { indices: [4, 0, 3, 7], color: '#9e7bff', label: '3' },
+      { indices: [3, 2, 6, 7], color: '#ff8a5b', label: '1' },
+      { indices: [0, 4, 5, 1], color: '#3db4ff', label: '6' }
+    ];
+
+    const projectedFaces = faces
+      .map((face) => {
+        const points = face.indices.map((index) => this.project(verts[index]));
+        const avgZ = points.reduce((total, point) => total + point.z, 0) / points.length;
+        return { ...face, points, avgZ };
+      })
+      .sort((a, b) => b.avgZ - a.avgZ);
 
     ctx.save();
-    ctx.translate(x, y - lift);
-    ctx.rotate(this.angle);
+    ctx.translate(0, 0);
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
-    ctx.beginPath();
-    ctx.ellipse(0, s * 1.1, s * 1.35, s * 0.7, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    const top = [
-      { x: 0, y: -s * 0.9 },
-      { x: s * 0.78, y: -s * 0.45 },
-      { x: 0, y: s * 0.15 },
-      { x: -s * 0.78, y: -s * 0.45 }
-    ];
-    const right = [
-      { x: s * 0.78, y: -s * 0.45 },
-      { x: s * 1.1, y: 0.1 },
-      { x: s * 1.1, y: s * 0.85 },
-      { x: 0, y: s * 0.15 }
-    ];
-    const left = [
-      { x: -s * 0.78, y: -s * 0.45 },
-      { x: 0, y: s * 0.15 },
-      { x: -s * 1.1, y: s * 0.85 },
-      { x: -s * 1.1, y: 0.1 }
-    ];
-
-    ctx.beginPath();
-    ctx.moveTo(top[0].x, top[0].y);
-    top.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
-    ctx.closePath();
-    ctx.fillStyle = '#f7c84b';
-    ctx.fill();
-    ctx.strokeStyle = '#c89320';
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(right[0].x, right[0].y);
-    right.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
-    ctx.closePath();
-    ctx.fillStyle = '#d93b2f';
-    ctx.fill();
-    ctx.strokeStyle = '#8b1d1a';
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(left[0].x, left[0].y);
-    left.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
-    ctx.closePath();
-    ctx.fillStyle = '#9d1b1b';
-    ctx.fill();
-    ctx.strokeStyle = '#611111';
-    ctx.stroke();
-
-    ctx.fillStyle = '#fff';
-    const pipRadius = 2.5;
-    const pipOffset = s * 0.22;
-    const val = this.currentValue;
-    const pipMap = {
-      1: [[0, 0]],
-      2: [[-pipOffset, -pipOffset], [pipOffset, pipOffset]],
-      3: [[0, 0], [-pipOffset, -pipOffset], [pipOffset, pipOffset]],
-      4: [[-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, pipOffset], [pipOffset, pipOffset]],
-      5: [[0, 0], [-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, pipOffset], [pipOffset, pipOffset]],
-      6: [[-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, 0], [pipOffset, 0], [-pipOffset, pipOffset], [pipOffset, pipOffset]]
-    };
-
-    (pipMap[val] || pipMap[1]).forEach(([px, py]) => {
+    projectedFaces.forEach((face) => {
       ctx.beginPath();
-      ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
+      face.points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = face.color;
       ctx.fill();
+      ctx.strokeStyle = 'rgba(20, 20, 30, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      const center = face.points.reduce((sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }), { x: 0, y: 0 });
+      const cx = center.x / face.points.length;
+      const cy = center.y / face.points.length;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(face.label, cx, cy);
     });
 
     ctx.restore();
   }
-}
-
-function drawPip(x, y) {
-  ctx.beginPath();
-  ctx.arc(x, y, 2, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 function updateDiceEngine() {
@@ -504,21 +504,34 @@ function startRollSequence() {
     const randomClass = getRandomItem(classesData);
     const randomWeapon = getRandomItem(weaponsData);
     const randomElement = getRandomItem(elementMatrix);
+    const rollingPower = Math.floor(Math.random() * 600) + 120;
 
     document.getElementById('hero-name').innerText = randomName;
     document.getElementById('stat-Class').innerText = randomClass.name;
     document.getElementById('hero-class-desc').innerText = randomClass.desc;
     document.getElementById('stat-Weapon').innerText = randomWeapon.name;
-    document.getElementById('stat-Age').innerText = Math.floor(Math.random() * 950) + 10;
+    setStatValue('Age', Math.floor(Math.random() * 950) + 10, 1000);
     document.getElementById('stat-Element').innerText = Math.random() > 0.8 ? randomElement.sr : randomElement.core;
-    document.getElementById('stat-Health').innerText = Math.floor(Math.random() * 250) + 20;
-    document.getElementById('stat-Attack').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Defense').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Regeneration').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Speed').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Critical').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Luck').innerText = Math.floor(Math.random() * 80) + 10;
-    document.getElementById('stat-Focus').innerText = Math.floor(Math.random() * 80) + 10;
+    setStatValue('Health', Math.floor(Math.random() * 250) + 20, 300);
+    setStatValue('Attack', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Defense', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Regeneration', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Speed', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Critical', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Luck', Math.floor(Math.random() * 80) + 10, 100);
+    setStatValue('Focus', Math.floor(Math.random() * 80) + 10, 100);
+
+    rollingPreviewEntry = {
+      name: randomName,
+      subLabel: `${randomClass.name} • ${randomElement.core}`,
+      power: rollingPower,
+      rarity: 'rolling',
+      isRolling: true,
+      summary: `${randomWeapon.name} • ${randomElement.core}`
+    };
+
+    historyEntries = [rollingPreviewEntry, ...historyEntries.filter((entry) => !entry.isRolling)].slice(0, 12);
+    renderHistoryPage();
 
     cycles += 1;
     if (cycles >= maxCycles) {
@@ -651,6 +664,7 @@ function finalizeCharacter() {
 function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, weapon, rank) {
   const prefix = isSSR ? '[SSR]' : isSR ? '[SR]' : '[Core]';
   const subLabel = `${prefix} ${element}`;
+  historyEntries = historyEntries.filter((entry) => !entry.isRolling);
   historyEntries.unshift({
     name,
     className: charClass,
