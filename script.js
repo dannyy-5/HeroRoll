@@ -287,9 +287,10 @@ function renderStrongestHero(hero) {
     return;
   }
 
-  const rarityRank = hero.rarityRank || hero.tierRank || 'C';
+  const rarityRank = getTierLabel(Number(hero.power) || 0).label;
   const variantMarker = hero.variantMarker || (hero.isSSR ? '++' : hero.isSR ? '+' : '');
   const badgeText = `${rarityRank}${variantMarker}`;
+  const rarityInfo = getRarityInfo(Number(hero.power) || 0);
 
   document.getElementById('eq-empty').style.display = 'none';
   const eqCard = document.getElementById('eq-card');
@@ -300,7 +301,7 @@ function renderStrongestHero(hero) {
     eqRarityBadge.textContent = badgeText;
     eqRarityBadge.dataset.rank = rarityRank;
     eqRarityBadge.dataset.variant = variantMarker;
-    eqRarityBadge.className = `eq-rarity-badge ${hero.tierClass || 'rarity-common'}`;
+    eqRarityBadge.className = `eq-rarity-badge ${rarityInfo.rarityClass}`;
   }
   document.getElementById('eq-class').innerText = hero.className;
   document.getElementById('eq-element').innerText = hero.element;
@@ -315,8 +316,8 @@ function renderStrongestHero(hero) {
   document.getElementById('eq-luck').innerText = hero.luck || '-';
   document.getElementById('eq-focus').innerText = hero.focus || '-';
   document.getElementById('eq-power').innerText = hero.power;
-  document.getElementById('eq-power').className = 'eq-power-value ' + (hero.tierClass || 'rarity-common');
-  document.getElementById('eq-name').className = 'eq-hero-name ' + (hero.tierClass || 'rarity-common');
+  document.getElementById('eq-power').className = 'eq-power-value ' + rarityInfo.rarityClass;
+  document.getElementById('eq-name').className = 'eq-hero-name ' + rarityInfo.rarityClass;
 }
 
 function resetGame() {
@@ -559,6 +560,10 @@ function finalizeCharacter() {
   if (targetElementPair.special === 'High burst') totalCombatPower += 20;
   if (targetElementPair.special === 'Shielding') totalCombatPower += 18;
   if (targetElementPair.special === 'Healing flow') totalCombatPower += 14;
+
+  const finalRarity = getTierLabel(totalCombatPower);
+  renderRank = finalRarity.rank;
+  renderTier = finalRarity.css;
 
   const powerEl = document.getElementById('total-power');
   powerEl.innerText = totalCombatPower;
