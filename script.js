@@ -226,12 +226,12 @@ function applyRarityVisuals(powerValue) {
   document.documentElement.style.setProperty('--active-rarity-glow', info.glow);
 
   const heroRarity = document.getElementById('hero-rarity');
-  if (heroRarity) heroRarity.textContent = info.label;
-
   const tierBadge = document.getElementById('element-tier');
+  const variantSuffix = tierBadge?.dataset.variant === 'ssr' ? '++' : tierBadge?.dataset.variant === 'sr' ? '+' : '';
+  if (heroRarity) heroRarity.textContent = `${info.label}${variantSuffix}`;
+
   if (tierBadge) {
-    const variantSuffix = tierBadge.dataset.variant === 'ssr' ? '++' : tierBadge.dataset.variant === 'sr' ? '+' : 'C';
-    tierBadge.textContent = variantSuffix;
+    tierBadge.textContent = `${info.label}${variantSuffix}`;
     tierBadge.dataset.rank = info.label;
     tierBadge.title = `${info.fullName} hero`;
   }
