@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Hero Roller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <!-- LEFT PANEL: Strongest Champion (Equipped) -->
+        <div class="equipped-panel">
+            <h2>🏆 Strongest Hero</h2>
+            <div id="eq-empty" class="eq-empty-msg">No legendary heroes recorded yet...</div>
+            <div id="eq-card" class="eq-card-hidden">
+                <div id="eq-name" class="eq-hero-name">-</div>
+                <div id="eq-class" class="eq-hero-class">-</div>
+                <div class="eq-stats-mini">
+                    <div>🔥 Element: <span id="eq-element">-</span></div>
+                    <div>⚔️ Weapon: <span id="eq-weapon">-</span></div>
+                    <div>⏳ Age: <span id="eq-age">-</span></div>
+                </div>
+                <div class="eq-power-wrap">
+                    <div class="eq-power-label">Power Rating</div>
+                    <div id="eq-power" class="eq-power-value">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL: Main Generator Roller -->
+        <div class="game-container">
+            <h1>Hero Generator</h1>
+            
+            <div class="dice-arena-container">
+                <canvas id="diceCanvas" width="400" height="110"></canvas>
+                <div id="arena-prompt" class="arena-overlay">CLICK CARD THEN PRESS SPACE TO ROLL</div>
+            </div>
+            
+            <div class="character-card">
+                <div class="character-header">
+                    <div id="hero-name" class="character-name">Ready to Roll</div>
+                    <div id="hero-class-desc" class="character-class-desc">Press Space to roll a random fantasy champion.</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box full-width-box">
+                        <span class="stat-name">Class Archetype</span>
+                        <span id="stat-Class" class="stat-value text-value">-</span>
+                    </div>
+                    <div class="stat-box full-width-box">
+                        <span class="stat-name">Element Matrix</span>
+                        <div class="element-display">
+                            <span id="stat-Element" class="stat-value text-value">-</span>
+                            <span id="element-tier" class="ele-badge">Core</span>
+                        </div>
+                    </div>
+                    <div class="stat-box full-width-box">
+                        <span class="stat-name">Assigned Weapon</span>
+                        <span id="stat-Weapon" class="stat-value text-value">-</span>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <span class="stat-name">Age</span>
+                        <div class="stat-right"><span id="stat-Age" class="stat-value">-</span><span class="stat-cap">/1000</span></div>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-name">Health</span>
+                        <div class="stat-right"><span id="stat-Health" class="stat-value">-</span><span class="stat-cap">/300</span></div>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-name">Attack</span>
+                        <div class="stat-right"><span id="stat-Attack" class="stat-value">-</span><span class="stat-cap">/100</span></div>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-name">Defense</span>
+                        <div class="stat-right"><span id="stat-Defense" class="stat-value">-</span><span class="stat-cap">/100</span></div>
+                    </div>
+                    <div class="stat-box full-width-box">
+                        <span class="stat-name">Regeneration</span>
+                        <div class="stat-right"><span id="stat-Regeneration" class="stat-value">-</span><span class="stat-cap">/100</span></div>
+                    </div>
+                </div>
+
+                <div class="power-section">
+                    <div class="power-label">Total Combat Power</div>
+                    <div id="total-power" class="power-value">-</div>
+                </div>
+            </div>
+
+            <button id="roll-button" class="roll-btn" onclick="startRollSequence()">PRESS SPACE TO ROLL</button>
+        </div>
+
+        <!-- RIGHT PANEL: History Log -->
+        <div class="history-panel">
+            <h2>Roll History</h2>
+            <div id="history-list" class="history-list">
+                <div class="history-empty">No heroes rolled yet...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
