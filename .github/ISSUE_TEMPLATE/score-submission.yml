@@ -1,0 +1,47 @@
+name: HeroRoll score submission
+about: Submit a HeroRoll score to the GitHub-only leaderboard
+title: "HeroRoll score: "
+labels: ["hero-score"]
+body:
+  - type: input
+    id: player-name
+    attributes:
+      label: Player Name
+      description: Your display name on the leaderboard
+      placeholder: e.g. ShadowKnight99
+    validations:
+      required: true
+
+  - type: input
+    id: hero-name
+    attributes:
+      label: Hero Name
+      description: Your generated hero name
+      placeholder: e.g. Frostbane
+    validations:
+      required: true
+
+  - type: input
+    id: score
+    attributes:
+      label: Score
+      description: Enter the total power value from your hero card
+      placeholder: e.g. 742
+    validations:
+      required: true
+
+  - type: input
+    id: class
+    attributes:
+      label: Class
+      description: The class shown on your hero card
+      placeholder: e.g. Wizard / Sorcerer
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Optional extra details
+      placeholder: Optional notes

@@ -1,0 +1,90 @@
+name: HeroRoll leaderboard sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  sync-leaderboard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build leaderboard from issue submissions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const labelName = 'hero-score';
+            const outPath = path.join(process.cwd(), 'data', 'leaderboard.json');
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'all',
+              labels: labelName,
+              per_page: 100
+            });
+
+            const entries = [];
+
+            for (const issue of issues) {
+              if (issue.pull_request) continue;
+
+              const body = issue.body || '';
+              const playerNameMatch = body.match(/### Player Name\s*\n([\s\S]*?)(?:\n\n|$)/i);
+              const heroNameMatch = body.match(/### Hero Name\s*\n([\s\S]*?)(?:\n\n|$)/i);
+              const scoreMatch = body.match(/### Score\s*\n(\d+)/i);
+              const classMatch = body.match(/### Class\s*\n([\s\S]*?)(?:\n\n|$)/i);
+              const date = new Date(issue.created_at).toISOString().slice(0, 10);
+
+              const playerName = (playerNameMatch && playerNameMatch[1]?.trim()) || 'Anonymous';
+              const heroName = (heroNameMatch && heroNameMatch[1]?.trim()) || 'Unknown Hero';
+              const score = Number(scoreMatch && scoreMatch[1] ? scoreMatch[1].trim() : 0);
+              const className = (classMatch && classMatch[1]?.trim()) || 'Unknown';
+
+              if (!Number.isFinite(score) || score <= 0) continue;
+
+              entries.push({
+                name: playerName,
+                hero: heroName,
+                className,
+                score,
+                date,
+                source: `issue-${issue.number}`
+              });
+            }
+
+            entries.sort((a, b) => b.score - a.score);
+            const result = {
+              updatedAt: new Date().toISOString(),
+              entries: entries.slice(0, 25)
+            };
+
+            fs.mkdirSync(path.dirname(outPath), { recursive: true });
+            fs.writeFileSync(outPath, JSON.stringify(result, null, 2) + '\n');
+
+            core.info(`Saved ${entries.length} leaderboard entries to ${outPath}`);
+
+      - name: Commit leaderboard update
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/leaderboard.json
+          if git diff --cached --quiet; then
+            echo "No leaderboard changes to commit."
+          else
+            git commit -m "Update HeroRoll leaderboard"
+            git push
+          fi

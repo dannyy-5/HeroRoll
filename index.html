@@ -1,105 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Hero Roller</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HeroRoll</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-nav">
+      <button class="page-tab active" type="button" data-page="index">Index</button>
+      <button class="page-tab" type="button" data-page="roll">Roll</button>
+      <button class="page-tab" type="button" data-page="history">History</button>
+      <button class="page-tab" type="button" data-page="favorites">Best Hero</button>
+      <button class="page-tab" type="button" data-page="leaderboard">Leaderboard</button>
+    </div>
 
-    <div class="main-wrapper">
-        <!-- LEFT PANEL: Strongest Champion (Equipped) -->
-        <div class="equipped-panel">
-            <h2>🏆 Strongest Hero</h2>
-            <div id="eq-empty" class="eq-empty-msg">No legendary heroes recorded yet...</div>
+    <div class="page-stack">
+      <section id="page-index" class="page active">
+        <div class="page-card">
+          <div class="page-heading">
+            <h2>HeroRoll Index</h2>
+            <span>Overview</span>
+          </div>
+
+          <div class="overview-grid">
+            <div class="overview-stat"><span>Level</span><strong id="dashboard-level">1</strong></div>
+            <div class="overview-stat"><span>Wins</span><strong id="dashboard-wins">0</strong></div>
+            <div class="overview-stat"><span>Rank</span><strong id="dashboard-rank">Fresh</strong></div>
+            <div class="overview-stat"><span>Collection</span><strong id="dashboard-collection">0</strong></div>
+          </div>
+
+          <div class="overview-panels">
+            <div class="overview-block">
+              <h3>Best hero</h3>
+              <p id="dashboard-best-hero">No hero summoned yet.</p>
+            </div>
+            <div class="overview-block">
+              <h3>Last battle</h3>
+              <p id="dashboard-battle">No battle started yet.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-roll" class="page">
+        <div class="app-shell">
+          <aside class="panel left-panel">
+            <div class="panel-title">Strongest Hero</div>
+            <div id="eq-empty" class="eq-empty">No legendary hero yet...</div>
             <div id="eq-card" class="eq-card-hidden">
-                <div id="eq-name" class="eq-hero-name">-</div>
-                <div id="eq-class" class="eq-hero-class">-</div>
-                <div class="eq-stats-mini">
-                    <div>🔥 Element: <span id="eq-element">-</span></div>
-                    <div>⚔️ Weapon: <span id="eq-weapon">-</span></div>
-                    <div>⏳ Age: <span id="eq-age">-</span></div>
-                </div>
-                <div class="eq-power-wrap">
-                    <div class="eq-power-label">Power Rating</div>
-                    <div id="eq-power" class="eq-power-value">-</div>
-                </div>
+              <div id="eq-name" class="eq-hero-name rarity-common">-</div>
+              <div class="eq-grid">
+                <div><span>Class</span><strong id="eq-class">-</strong></div>
+                <div><span>Element</span><strong id="eq-element">-</strong></div>
+                <div><span>Weapon</span><strong id="eq-weapon">-</strong></div>
+                <div><span>Age</span><strong id="eq-age">-</strong></div>
+              </div>
+              <div class="eq-power-wrap">
+                <span>Power</span>
+                <strong id="eq-power" class="eq-power-value rarity-common">-</strong>
+              </div>
             </div>
-        </div>
 
-        <!-- CENTER PANEL: Main Generator Roller -->
-        <div class="game-container">
-            <h1>Hero Generator</h1>
-            
-            <div class="dice-arena-container">
-                <canvas id="diceCanvas" width="400" height="110"></canvas>
-                <div id="arena-prompt" class="arena-overlay">CLICK CARD THEN PRESS SPACE TO ROLL</div>
+            <div class="collection-wrap">
+              <div class="panel-subtitle">Hero Collection</div>
+              <div id="collection-list" class="collection-list"></div>
             </div>
-            
+          </aside>
+
+          <main class="game-panel">
+            <div class="top-bar">
+              <div class="brand">HeroRoll</div>
+              <div class="tag">Github-only leaderboard</div>
+            </div>
+
             <div class="character-card">
-                <div class="character-header">
-                    <div id="hero-name" class="character-name">Ready to Roll</div>
-                    <div id="hero-class-desc" class="character-class-desc">Press Space to roll a random fantasy champion.</div>
-                </div>
+              <div class="hero-header">
+                <div id="hero-name" class="hero-name">Ready to Roll</div>
+                <div id="element-tier" class="element-tier">Core</div>
+              </div>
 
-                <div class="stats-grid">
-                    <div class="stat-box full-width-box">
-                        <span class="stat-name">Class Archetype</span>
-                        <span id="stat-Class" class="stat-value text-value">-</span>
-                    </div>
-                    <div class="stat-box full-width-box">
-                        <span class="stat-name">Element Matrix</span>
-                        <div class="element-display">
-                            <span id="stat-Element" class="stat-value text-value">-</span>
-                            <span id="element-tier" class="ele-badge">Core</span>
-                        </div>
-                    </div>
-                    <div class="stat-box full-width-box">
-                        <span class="stat-name">Assigned Weapon</span>
-                        <span id="stat-Weapon" class="stat-value text-value">-</span>
-                    </div>
-                    
-                    <div class="stat-box">
-                        <span class="stat-name">Age</span>
-                        <div class="stat-right"><span id="stat-Age" class="stat-value">-</span><span class="stat-cap">/1000</span></div>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-name">Health</span>
-                        <div class="stat-right"><span id="stat-Health" class="stat-value">-</span><span class="stat-cap">/300</span></div>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-name">Attack</span>
-                        <div class="stat-right"><span id="stat-Attack" class="stat-value">-</span><span class="stat-cap">/100</span></div>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-name">Defense</span>
-                        <div class="stat-right"><span id="stat-Defense" class="stat-value">-</span><span class="stat-cap">/100</span></div>
-                    </div>
-                    <div class="stat-box full-width-box">
-                        <span class="stat-name">Regeneration</span>
-                        <div class="stat-right"><span id="stat-Regeneration" class="stat-value">-</span><span class="stat-cap">/100</span></div>
-                    </div>
-                </div>
+              <div id="arena-prompt" class="arena-prompt">Press Space or tap the button to summon a hero.</div>
 
-                <div class="power-section">
-                    <div class="power-label">Total Combat Power</div>
-                    <div id="total-power" class="power-value">-</div>
+              <canvas id="diceCanvas" width="380" height="120"></canvas>
+
+              <div class="stat-grid">
+                <div class="stat-box"><span>Class</span><strong id="stat-Class">-</strong></div>
+                <div class="stat-box"><span>Element</span><strong id="stat-Element">-</strong></div>
+                <div class="stat-box"><span>Weapon</span><strong id="stat-Weapon">-</strong></div>
+                <div class="stat-box"><span>Age</span><strong id="stat-Age">-</strong></div>
+                <div class="stat-box"><span>Health</span><strong id="stat-Health">-</strong></div>
+                <div class="stat-box"><span>Attack</span><strong id="stat-Attack">-</strong></div>
+                <div class="stat-box"><span>Defense</span><strong id="stat-Defense">-</strong></div>
+                <div class="stat-box"><span>Regen</span><strong id="stat-Regeneration">-</strong></div>
+                <div class="stat-box"><span>Speed</span><strong id="stat-Speed">-</strong></div>
+                <div class="stat-box"><span>Critical</span><strong id="stat-Critical">-</strong></div>
+                <div class="stat-box"><span>Luck</span><strong id="stat-Luck">-</strong></div>
+                <div class="stat-box"><span>Focus</span><strong id="stat-Focus">-</strong></div>
+              </div>
+
+              <div class="power-row">
+                <div class="power-label">Total Power</div>
+                <div id="total-power" class="power-value rarity-common">-</div>
+              </div>
+
+              <div class="hero-class-wrap">
+                <div class="class-desc" id="hero-class-desc">Press Space to roll a random fantasy champion.</div>
+              </div>
+
+              <div class="button-row">
+                <button id="roll-button" type="button">PRESS SPACE TO ROLL</button>
+                <button id="battle-button" type="button" class="secondary">Battle Enemy</button>
+                <button id="level-button" type="button" class="secondary">Level Up</button>
+                <button id="submit-score-btn" type="button" class="secondary">Submit Score to GitHub</button>
+              </div>
+
+              <div class="battle-panel">
+                <div class="panel-subtitle">Arena</div>
+                <div class="battle-header">
+                  <div>
+                    <div class="battle-label">Enemy</div>
+                    <div id="enemy-name" class="enemy-name">Awaiting battle</div>
+                  </div>
+                  <div class="battle-score" id="enemy-power">0</div>
                 </div>
+                <div id="battle-log" class="battle-log">No battle started yet.</div>
+              </div>
             </div>
+          </main>
 
-            <button id="roll-button" class="roll-btn" onclick="startRollSequence()">PRESS SPACE TO ROLL</button>
-        </div>
-
-        <!-- RIGHT PANEL: History Log -->
-        <div class="history-panel">
-            <h2>Roll History</h2>
-            <div id="history-list" class="history-list">
-                <div class="history-empty">No heroes rolled yet...</div>
+          <aside class="panel right-panel">
+            <div class="panel-title">Leaderboard</div>
+            <div id="leaderboard-status" class="leaderboard-status">Loading leaderboard...</div>
+            <div class="leaderboard-summary">
+              <div><span>Level</span><strong id="player-level">1</strong></div>
+              <div><span>Wins</span><strong id="player-wins">0</strong></div>
+              <div><span>Rank</span><strong id="player-rank">-</strong></div>
             </div>
+            <div id="leaderboard-list" class="leaderboard-list"></div>
+          </aside>
         </div>
+      </section>
+
+      <section id="page-history" class="page">
+        <div class="page-card">
+          <div class="page-heading">
+            <h2>Hero History</h2>
+            <span id="history-page-count">0 entries</span>
+          </div>
+          <div id="history-page-list" class="page-list"></div>
+        </div>
+      </section>
+
+      <section id="page-favorites" class="page">
+        <div class="page-card">
+          <div class="page-heading">
+            <h2>Best Hero & Favorites</h2>
+            <span id="favorites-page-count">0 saved</span>
+          </div>
+
+          <div id="favorite-best-card" class="favorite-best-card">
+            <strong id="favorites-best-name">No hero yet</strong>
+            <span id="favorites-best-meta">Roll a champion to begin</span>
+          </div>
+
+          <div id="favorites-page-list" class="favorites-grid"></div>
+        </div>
+      </section>
+
+      <section id="page-leaderboard" class="page">
+        <div class="page-card leaderboard-page-card">
+          <div class="page-heading">
+            <h2>Leaderboard</h2>
+            <span>Public rankings</span>
+          </div>
+          <div id="page-leaderboard-status" class="leaderboard-status">Loading leaderboard...</div>
+          <div id="page-leaderboard-list" class="page-leaderboard-list"></div>
+        </div>
+      </section>
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
