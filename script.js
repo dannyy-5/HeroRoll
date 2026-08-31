@@ -362,11 +362,12 @@ class BirdEyeDice {
 
   update() {
     if (this.isSettled) {
-      this.x += (this.baseX - this.x) * 0.16;
-      this.y += (this.baseY - this.y) * 0.16;
-      this.rollX += (0 - this.rollX) * 0.1;
-      this.rollY += (0 - this.rollY) * 0.1;
-      this.rollZ += (0 - this.rollZ) * 0.08;
+      this.x = this.baseX;
+      this.y = this.baseY;
+      this.z = 0;
+      this.vx = 0;
+      this.vy = 0;
+      this.vz = 0;
       return;
     }
 
@@ -466,7 +467,7 @@ function updateDiceEngine() {
     }
   });
 
-  if (motion) {
+  if (isRolling || motion) {
     animationId = requestAnimationFrame(updateDiceEngine);
   } else {
     animationId = null;
@@ -652,12 +653,27 @@ function finalizeCharacter() {
 
   addHeroToHistory(`${variantName} ${finalName}`, selectedClass.name, finalElementName, isSR, isSSR, totalCombatPower, renderTier, finalWeaponObj.name, renderRank);
 
+  diceArray.forEach((die) => {
+    die.isSettled = true;
+    die.vx = 0;
+    die.vy = 0;
+    die.vz = 0;
+    die.x = die.baseX;
+    die.y = die.baseY;
+    die.z = 0;
+    die.rollX = 0;
+    die.rollY = 0;
+    die.rollZ = 0;
+  });
+
   const button = document.getElementById('roll-button');
   button.disabled = false;
   button.innerText = 'PRESS SPACE TO ROLL';
   isRolling = false;
   const card = document.querySelector('.character-card');
   if (card) card.classList.remove('is-rolling');
+  if (animationId) cancelAnimationFrame(animationId);
+  updateDiceEngine();
   saveGameState();
 }
 
