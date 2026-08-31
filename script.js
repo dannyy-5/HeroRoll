@@ -318,7 +318,52 @@ function startRollSequence() {
   isRolling = true;
 
   document.getElementById('arena-prompt').style.display = 'none';
-  finalizeCharacter();
+  const button = document.getElementById('roll-button');
+  button.disabled = true;
+  button.innerText = 'ROLLING...';
+
+  let cycle = 0;
+  const totalCycles = 10;
+  const previewInterval = setInterval(() => {
+    const randomName = getRandomItem(prefixes) + getRandomItem(suffixes);
+    const randomClass = getRandomItem(classesData);
+    const randomWeapon = getRandomItem(weaponsData);
+    const randomElement = getRandomItem(elementMatrix);
+    const wobblePower = Math.floor(Math.random() * 550) + 140;
+
+    document.getElementById('hero-name').innerText = randomName;
+    document.getElementById('stat-Class').innerText = randomClass.name;
+    document.getElementById('hero-class-desc').innerText = randomClass.desc;
+    document.getElementById('stat-Weapon').innerText = randomWeapon.name;
+    document.getElementById('stat-Element').innerText = randomElement.core;
+
+    setStatValue('Age', Math.floor(Math.random() * 980) + 20, 1000);
+    setStatValue('Health', Math.floor(Math.random() * 260) + 25, 300);
+    setStatValue('Attack', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Defense', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Regeneration', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Speed', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Critical', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Luck', Math.floor(Math.random() * 85) + 10, 100);
+    setStatValue('Focus', Math.floor(Math.random() * 85) + 10, 100);
+
+    const previewEntry = {
+      name: randomName,
+      subLabel: `${randomClass.name} • ${randomElement.core}`,
+      power: wobblePower,
+      isRolling: true,
+      summary: `${randomWeapon.name} • ${randomElement.core}`
+    };
+
+    historyEntries = [previewEntry, ...historyEntries.filter((entry) => !entry.isRolling)].slice(0, 12);
+    renderHistoryPage();
+
+    cycle += 1;
+    if (cycle >= totalCycles) {
+      clearInterval(previewInterval);
+      finalizeCharacter();
+    }
+  }, 80);
 }
 
 function finalizeCharacter() {
@@ -332,7 +377,7 @@ function finalizeCharacter() {
   let renderTier = 'rarity-common';
   let isSR = false;
   let isSSR = false;
-  let variantName = 'None';
+  let variantName = '';
   let finalElementName = targetElementPair.core;
 
   if (variantRoll > 0.92) {
@@ -372,7 +417,8 @@ function finalizeCharacter() {
   const luck = classBoostedStats.luck;
   const focus = classBoostedStats.focus;
 
-  document.getElementById('hero-name').innerText = `${variantName} ${finalName}`;
+  const finalHeroName = variantName ? `${variantName} ${finalName}` : finalName;
+  document.getElementById('hero-name').innerText = finalHeroName;
   document.getElementById('stat-Class').innerText = selectedClass.name;
   document.getElementById('hero-class-desc').innerText = selectedClass.desc;
   document.getElementById('stat-Weapon').innerText = `${finalWeaponObj.name} (+${finalWeaponObj.bonus} Power)`;
@@ -416,7 +462,7 @@ function finalizeCharacter() {
   powerEl.classList.add(renderTier);
 
   const strongestHero = {
-    name: `${variantName} ${finalName}`,
+    name: finalHeroName,
     className: selectedClass.name,
     element: finalElementName,
     weapon: finalWeaponObj.name,
@@ -430,7 +476,7 @@ function finalizeCharacter() {
     renderStrongestHero(strongestHero);
   }
 
-  addHeroToHistory(`${variantName} ${finalName}`, selectedClass.name, finalElementName, isSR, isSSR, totalCombatPower, renderTier, finalWeaponObj.name, renderRank);
+  addHeroToHistory(finalHeroName, selectedClass.name, finalElementName, isSR, isSSR, totalCombatPower, renderTier, finalWeaponObj.name, renderRank);
 
   const button = document.getElementById('roll-button');
   button.disabled = false;
@@ -466,6 +512,15 @@ window.addEventListener('keydown', (event) => {
 });
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
+
+window.addEventListener('load', () => {
+  const loader = document.getElementById('startup-loader');
+  if (loader) {
+    window.setTimeout(() => {
+      loader.classList.add('is-hidden');
+    }, 1200);
+  }
+});
 
 updatePlayerHUD();
 renderHistoryPage();

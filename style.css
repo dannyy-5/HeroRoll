@@ -25,16 +25,31 @@
 body {
   margin: 0;
   min-height: 100vh;
+  position: relative;
   background:
-    radial-gradient(circle at top, rgba(95, 108, 156, 0.32), transparent 30%),
-    linear-gradient(180deg, #0b0d16, #141827 40%, #0d1018 100%);
-  font-family: Arial, Helvetica, sans-serif;
+    radial-gradient(circle at top, rgba(129, 95, 173, 0.38), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(22, 140, 102, 0.28), transparent 24%),
+    linear-gradient(180deg, #0b0d16, #141827 32%, #0a0e18 100%);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 28px;
-  animation: ambientShift 14s ease-in-out infinite alternate;
+  overflow-x: hidden;
+  animation: ambientShift 16s ease-in-out infinite alternate;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+  pointer-events: none;
 }
 
 @keyframes ambientShift {
@@ -48,6 +63,8 @@ body {
   grid-template-columns: 300px minmax(400px, 1fr) 320px;
   gap: 20px;
   align-items: stretch;
+  position: relative;
+  z-index: 1;
 }
 
 .single-page {
@@ -55,10 +72,10 @@ body {
 }
 
 .panel, .character-card {
-  background: var(--panel);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 18px;
-  box-shadow: 0 18px 36px rgba(0,0,0,0.28);
+  background: linear-gradient(180deg, rgba(25, 29, 44, 0.96), rgba(15, 17, 28, 0.96));
+  border: 1px solid rgba(246, 215, 122, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 18px 36px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.02);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
@@ -80,6 +97,7 @@ body {
   letter-spacing: 0.15em;
   color: var(--gold);
   margin-bottom: 15px;
+  text-shadow: 0 0 18px rgba(246, 215, 122, 0.35);
 }
 
 .eq-empty {
@@ -137,6 +155,7 @@ body {
 .game-panel {
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .top-bar {
@@ -147,10 +166,12 @@ body {
 }
 
 .brand {
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   color: var(--gold);
+  text-transform: uppercase;
+  text-shadow: 0 0 16px rgba(246, 215, 122, 0.35);
 }
 
 .tag {
@@ -162,7 +183,28 @@ body {
 
 .character-card {
   padding: 18px;
-  background: linear-gradient(180deg, rgba(26, 29, 46, 0.95), rgba(12, 14, 23, 0.96));
+  background: linear-gradient(180deg, rgba(26, 29, 46, 0.96), rgba(12, 14, 23, 0.98));
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.character-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(246, 215, 122, 0.09) 48%, transparent 100%);
+  transform: translateX(-120%);
+  animation: runeSweep 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes runeSweep {
+  0% { transform: translateX(-120%); }
+  50% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
 }
 
 .hero-header {
@@ -308,11 +350,11 @@ button {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: linear-gradient(135deg, var(--gold), var(--gold-2));
-  color: #1b1203;
+  background: linear-gradient(135deg, #f6d77a, #dca52a 55%, #f1d27d 100%);
+  color: #1a1206;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  box-shadow: 0 10px 22px rgba(246, 215, 122, 0.18);
+  box-shadow: 0 12px 28px rgba(246, 215, 122, 0.22), inset 0 1px 0 rgba(255,255,255,0.35);
 }
 
 button:hover {
@@ -344,6 +386,76 @@ button:disabled {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 14px;
+}
+
+.startup-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: radial-gradient(circle at center, rgba(23, 18, 38, 0.95), rgba(8, 10, 18, 0.98));
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+
+.startup-loader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-orb {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 1px solid rgba(246, 215, 122, 0.5);
+  box-shadow: 0 0 24px rgba(246, 215, 122, 0.25), inset 0 0 18px rgba(246, 215, 122, 0.18);
+  position: relative;
+  animation: orbPulse 1.6s ease-in-out infinite alternate;
+}
+
+.loader-orb::before,
+.loader-orb::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(126, 247, 255, 0.5);
+}
+
+.loader-orb::after {
+  inset: 34px;
+  border-color: rgba(255, 138, 223, 0.5);
+}
+
+@keyframes orbPulse {
+  0% { transform: scale(0.94); box-shadow: 0 0 12px rgba(246, 215, 122, 0.18), inset 0 0 12px rgba(246, 215, 122, 0.08); }
+  100% { transform: scale(1.08); box-shadow: 0 0 30px rgba(246, 215, 122, 0.4), inset 0 0 28px rgba(246, 215, 122, 0.25); }
+}
+
+.loader-title {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  letter-spacing: 0.15em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(246, 215, 122, 0.45), 0 0 40px rgba(246, 215, 122, 0.18);
+  animation: titleGlow 1.2s ease-in-out infinite alternate;
+}
+
+.loader-subtitle {
+  font-size: 0.8rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@keyframes titleGlow {
+  0% { opacity: 0.7; transform: translateY(2px); }
+  100% { opacity: 1; transform: translateY(-2px); }
 }
 
 .right-panel {
