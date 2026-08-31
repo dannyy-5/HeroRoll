@@ -1,5 +1,4 @@
 const STORAGE_KEY = 'heroroll-save-v1';
-const GITHUB_ISSUE_URL = 'https://github.com/dannyy-5/HeroRoll/issues/new?template=score-submission.yml';
 
 const prefixes = ['Gorgon', 'Shadow', 'Light', 'Iron', 'Storm', 'Frost', 'Flame', 'Void', 'Swift', 'Apex', 'Dusk', 'Dread', 'Ember', 'Rune', 'Wraith', 'Moon', 'Solar', 'Rift', 'Titan', 'Nova'];
 const suffixes = ['Thorne', 'weaver', 'heart', 'breaker', 'fury', 'strider', 'gaze', 'bane', 'shard', 'bound', 'fall', 'fist', 'forge', 'crest', 'knight', 'seer', 'warden', 'rune', 'ghost', 'storm'];
@@ -87,7 +86,6 @@ const classesData = [
 let isRolling = false;
 let highestPowerEver = 0;
 let historyEntries = [];
-let heroCollection = [];
 
 const canvas = document.getElementById('diceCanvas');
 const ctx = canvas.getContext('2d');
@@ -146,7 +144,6 @@ function saveGameState() {
   const totalPower = document.getElementById('total-power');
   const state = {
     highestPowerEver,
-    heroCollection,
     strongestHero: document.getElementById('eq-name').innerText !== '-' ? {
       name: document.getElementById('eq-name').innerText,
       className: document.getElementById('eq-class').innerText,
@@ -235,28 +232,6 @@ function renderStrongestHero(hero) {
   document.getElementById('eq-name').className = 'eq-hero-name ' + (hero.tierClass || 'rarity-common');
 }
 
-function renderCollection() {
-  const collectionList = document.getElementById('collection-list');
-  if (!collectionList) return;
-  collectionList.innerHTML = '';
-
-  const topHeroes = heroCollection.slice(0, 5);
-  if (!topHeroes.length) {
-    collectionList.innerHTML = '<div class="collection-item"><strong>No heroes yet</strong><span>Roll to start</span></div>';
-    return;
-  }
-
-  topHeroes.forEach((hero) => {
-    const item = document.createElement('div');
-    item.className = 'collection-item';
-    item.innerHTML = `
-      <strong>${hero.name}</strong>
-      <span>${hero.rank}</span>
-    `;
-    collectionList.appendChild(item);
-  });
-}
-
 function renderHistoryList() {
   const list = document.getElementById('history-list');
   if (list) {
@@ -315,7 +290,6 @@ function loadGameState() {
     if (!raw) return;
     const state = JSON.parse(raw);
     if (typeof state.highestPowerEver === 'number') highestPowerEver = state.highestPowerEver;
-    if (Array.isArray(state.heroCollection)) heroCollection = state.heroCollection;
     if (Array.isArray(state.history)) historyEntries = state.history;
 
     if (state.currentHero) {
@@ -329,7 +303,6 @@ function loadGameState() {
     }
 
     updatePlayerHUD();
-    renderCollection();
     renderHistoryList();
   } catch (error) {
     console.warn('Failed to load saved HeroRoll data:', error);
@@ -358,52 +331,75 @@ class BirdEyeDice {
     this.x = x;
     this.y = y;
     this.size = 20;
-    this.vx = (Math.random() * 8) - 4;
-    this.vy = (Math.random() * 6) - 3;
+    this.vx = (Math.random() * 11) - 5.5;
+    this.vy = -(Math.random() * 10 + 8);
     this.angle = Math.random() * Math.PI * 2;
-    this.spinSpeed = (Math.random() * 0.4) - 0.2;
-    this.height3D = 35;
-    this.gravity = 1.8;
+    this.spinX = (Math.random() * 0.28) - 0.14;
+    this.spinY = (Math.random() * 0.28) - 0.14;
+    this.spinZ = (Math.random() * 0.8) - 0.4;
+    this.height = 0;
+    this.gravity = 0.7;
     this.currentValue = Math.floor(Math.random() * 6) + 1;
+    this.groundY = canvas.height - 28;
+    this.isSettled = false;
   }
 
   update() {
     this.x += this.vx;
     this.y += this.vy;
-    this.angle += this.spinSpeed;
+    this.vy += this.gravity;
+    this.angle += this.spinZ;
 
-    if (this.x < this.size) { this.x = this.size; this.vx *= -0.6; }
-    if (this.x > canvas.width - this.size) { this.x = canvas.width - this.size; this.vx *= -0.6; }
-    if (this.y < this.size) { this.y = this.size; this.vy *= -0.6; }
-    if (this.y > canvas.height - this.size) { this.y = canvas.height - this.size; this.vy *= -0.6; }
-
-    if (this.height3D > 0) {
-      this.height3D -= this.gravity;
-      this.currentValue = Math.floor(Math.random() * 6) + 1;
-    } else {
-      this.height3D = 0;
-      this.vx *= 0.85;
-      this.vy *= 0.85;
-      this.spinSpeed *= 0.85;
+    if (this.x < this.size) {
+      this.x = this.size;
+      this.vx *= -0.6;
     }
+    if (this.x > canvas.width - this.size) {
+      this.x = canvas.width - this.size;
+      this.vx *= -0.6;
+    }
+
+    if (this.y >= this.groundY) {
+      this.y = this.groundY;
+      this.vy *= -0.42;
+      this.vx *= 0.96;
+      this.spinZ *= 0.9;
+      this.currentValue = Math.floor(Math.random() * 6) + 1;
+
+      if (Math.abs(this.vy) < 0.8) {
+        this.vy = 0;
+        this.isSettled = true;
+      }
+    }
+
+    this.height = Math.max(0, this.groundY - this.y);
+    this.spinX *= 0.98;
+    this.spinY *= 0.98;
   }
 
   draw() {
     ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(this.x + 2, this.y + 2, this.size, this.size);
-    ctx.translate(this.x, this.y - this.height3D);
+    ctx.translate(this.x, this.y - this.height * 0.55);
     ctx.rotate(this.angle);
-    ctx.fillStyle = '#8f1d1d';
-    ctx.fillRect(-this.size / 2 + 2, -this.size / 2 + 2, this.size, this.size);
-    ctx.fillStyle = '#d93838';
-    ctx.strokeStyle = '#5c1010';
-    ctx.lineWidth = 1.5;
-    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-    ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
-    ctx.fillStyle = '#ffffff';
+    ctx.scale(1, 1 - (this.height / 180));
 
-    const offset = this.size / 4;
+    const side = this.size;
+    const shade = this.height > 0 ? 0.75 : 1;
+
+    ctx.fillStyle = `rgba(0, 0, 0, ${0.2 + this.height / 220})`;
+    ctx.fillRect(side * 0.28, side * 0.22, side, side);
+
+    ctx.fillStyle = '#c72626';
+    ctx.strokeStyle = '#5a0f0f';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(-side / 2, -side / 2, side, side);
+    ctx.strokeRect(-side / 2, -side / 2, side, side);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.fillRect(-side / 2 + 3, -side / 2 + 3, side * 0.5, side * 0.5);
+
+    ctx.fillStyle = '#fff';
+    const offset = side / 4;
     const val = this.currentValue;
 
     if (val === 1 || val === 3 || val === 5) drawPip(0, 0);
@@ -419,6 +415,7 @@ class BirdEyeDice {
       drawPip(-offset, 0);
       drawPip(offset, 0);
     }
+
     ctx.restore();
   }
 }
@@ -436,10 +433,16 @@ function updateDiceEngine() {
   diceArray.forEach((die) => {
     die.update();
     die.draw();
-    if (Math.abs(die.vx) > 0.08 || die.height3D > 0) motion = true;
+    if (!die.isSettled || Math.abs(die.vy) > 0.05 || Math.abs(die.vx) > 0.05) {
+      motion = true;
+    }
   });
 
-  if (motion) animationId = requestAnimationFrame(updateDiceEngine);
+  if (motion) {
+    animationId = requestAnimationFrame(updateDiceEngine);
+  } else {
+    animationId = null;
+  }
 }
 
 function startRollSequence() {
@@ -459,8 +462,8 @@ function startRollSequence() {
   }
 
   diceArray = [];
-  for (let i = 0; i < 4; i++) {
-    diceArray.push(new BirdEyeDice(80 + (i * 80), 35 + (Math.random() * 25)));
+  for (let i = 0; i < 5; i++) {
+    diceArray.push(new BirdEyeDice(35 + (i * 70), 20 + (Math.random() * 20)));
   }
 
   if (animationId) cancelAnimationFrame(animationId);
@@ -607,18 +610,12 @@ function finalizeCharacter() {
 
   addHeroToHistory(`${variantName} ${finalName}`, selectedClass.name, finalElementName, isSR, isSSR, totalCombatPower, renderTier, finalWeaponObj.name, renderRank);
 
-  if (!heroCollection.some((hero) => hero.name === `${variantName} ${finalName}`)) {
-    heroCollection.unshift({ name: `${variantName} ${finalName}`, rank: renderRank });
-    heroCollection = heroCollection.slice(0, 8);
-  }
-
   const button = document.getElementById('roll-button');
   button.disabled = false;
   button.innerText = 'PRESS SPACE TO ROLL';
   isRolling = false;
   const card = document.querySelector('.character-card');
   if (card) card.classList.remove('is-rolling');
-  renderCollection();
   saveGameState();
 }
 
@@ -640,19 +637,6 @@ function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, 
   saveGameState();
 }
 
-function submitCurrentScore() {
-  const currentName = document.getElementById('hero-name')?.innerText || 'Hero';
-  const currentPower = document.getElementById('total-power')?.innerText || '0';
-  const currentClass = document.getElementById('stat-Class')?.innerText || 'Unknown';
-
-  const params = new URLSearchParams({
-    title: `HeroRoll score: ${currentName}`,
-    body: `### Player Name\nAnonymous Player\n\n### Hero Name\n${currentName}\n\n### Class\n${currentClass}\n\n### Score\n${currentPower}\n\n### Notes\nSubmitted from the live game.`
-  });
-
-  window.open(`${GITHUB_ISSUE_URL}&${params.toString()}`, '_blank', 'noopener,noreferrer');
-}
-
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault();
@@ -661,10 +645,8 @@ window.addEventListener('keydown', (event) => {
 });
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
-document.getElementById('submit-score-btn')?.addEventListener('click', submitCurrentScore);
 
 updatePlayerHUD();
-renderCollection();
 renderHistoryPage();
 loadGameState();
 
