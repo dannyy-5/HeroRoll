@@ -40,6 +40,10 @@
             <span>Power</span>
             <strong id="eq-power" class="eq-power-value rarity-common">-</strong>
           </div>
+          <div class="eq-code-wrap">
+            <span>Hero Code</span>
+            <strong id="eq-code">000-000-000</strong>
+          </div>
         </div>
       </aside>
 
@@ -183,6 +187,21 @@
             <button id="roll-button" type="button">PRESS SPACE TO ROLL</button>
           </div>
         </div>
+      </main>
+
+      <main id="code-page" class="code-page" aria-hidden="true">
+        <div class="top-bar">
+          <div class="brand">Code Battle</div>
+          <div class="tag">Press Tab to return</div>
+        </div>
+        <section class="code-card">
+          <div class="panel-title">Challenge a Hero Code</div>
+          <p class="code-help">Enter a friend's nine-digit hero code to summon their exact champion.</p>
+          <label class="code-label" for="hero-code-input">Hero Code</label>
+          <input id="hero-code-input" class="hero-code-input" inputmode="numeric" maxlength="11" placeholder="000-000-000" autocomplete="off" />
+          <button id="battle-button" type="button">BATTLE CODE</button>
+          <div id="battle-result" class="battle-result" aria-live="polite"></div>
+        </section>
       </main>
 
       <aside class="panel right-panel">

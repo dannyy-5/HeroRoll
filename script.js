@@ -86,6 +86,25 @@ const classesData = [
 let isRolling = false;
 let highestPowerEver = 0;
 let historyEntries = [];
+let randomSource = Math.random;
+
+function createSeededRandom(seed) {
+  let value = Number(seed) || 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) % 4294967296;
+    return value / 4294967296;
+  };
+}
+
+function formatHeroCode(seed) {
+  const digits = String(Math.max(0, Math.min(999999999, Number(seed) || 0))).padStart(9, '0');
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+function parseHeroCode(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length === 9 ? Number(digits) : null;
+}
 
 function getDefaultHeroState() {
   return {
@@ -156,6 +175,7 @@ function saveGameState() {
       critical: document.getElementById('eq-critical').innerText,
       luck: document.getElementById('eq-luck').innerText,
       focus: document.getElementById('eq-focus').innerText,
+      code: document.getElementById('eq-code').innerText,
       power: strongestPower ? strongestPower.innerText : '',
       tierClass: strongestPower ? strongestPower.classList.value.replace('eq-power-value', '').trim() || 'rarity-common' : 'rarity-common'
     } : null,
@@ -284,6 +304,7 @@ function renderStrongestHero(hero) {
   if (!hero || !hero.name || hero.name === '-') {
     document.getElementById('eq-empty').style.display = 'block';
     document.getElementById('eq-card').className = 'eq-card-hidden';
+    document.getElementById('eq-code').innerText = '000-000-000';
     return;
   }
 
@@ -318,6 +339,7 @@ function renderStrongestHero(hero) {
   document.getElementById('eq-power').innerText = hero.power;
   document.getElementById('eq-power').className = 'eq-power-value ' + rarityInfo.rarityClass;
   document.getElementById('eq-name').className = 'eq-hero-name ' + rarityInfo.rarityClass;
+  document.getElementById('eq-code').innerText = hero.code || '000-000-000';
 }
 
 function resetGame() {
@@ -330,6 +352,32 @@ function resetGame() {
   renderStrongestHero(null);
   renderHistoryPage();
   saveGameState();
+}
+
+function toggleCodePage() {
+  const appShell = document.querySelector('.app-shell');
+  if (!appShell) return;
+  const isCodePage = appShell.classList.toggle('code-mode');
+  document.getElementById('code-page')?.setAttribute('aria-hidden', String(!isCodePage));
+  if (isCodePage) document.getElementById('hero-code-input')?.focus();
+}
+
+function battleCode() {
+  const input = document.getElementById('hero-code-input');
+  const result = document.getElementById('battle-result');
+  const seed = parseHeroCode(input?.value);
+  if (seed === null) {
+    if (result) result.textContent = 'Enter exactly nine digits.';
+    return;
+  }
+
+  highestPowerEver = -1;
+  finalizeCharacter(seed);
+  const importedPower = Number(document.getElementById('eq-power').innerText) || 0;
+  if (result) {
+    result.textContent = `Hero summoned: ${formatHeroCode(seed)} | Power ${importedPower}`;
+  }
+  input.value = formatHeroCode(seed);
 }
 
 function renderHistoryList() {
@@ -402,14 +450,14 @@ function loadGameState() {
 }
 
 function rollRareBiasedStat(maxCap) {
-  const baseAvg = (Math.random() + Math.random() + Math.random() + Math.random()) / 4;
+  const baseAvg = (randomSource() + randomSource() + randomSource() + randomSource()) / 4;
   const curvedFactor = Math.pow(baseAvg, 1.8);
   const finalVal = Math.floor(curvedFactor * maxCap);
   return Math.max(Math.floor(maxCap * 0.08), finalVal);
 }
 
 function getRandomItem(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(randomSource() * arr.length)];
 }
 
 function getRandomVariantName(type) {
@@ -471,13 +519,15 @@ function startRollSequence() {
   }, 80);
 }
 
-function finalizeCharacter() {
+function finalizeCharacter(seed = Math.floor(Math.random() * 1000000000)) {
+  const previousRandomSource = randomSource;
+  randomSource = createSeededRandom(seed);
   const finalName = getRandomItem(prefixes) + getRandomItem(suffixes);
   const selectedClass = getRandomItem(classesData);
   const finalAge = rollRareBiasedStat(1000);
   const finalWeaponObj = getRandomItem(weaponsData);
   const targetElementPair = getRandomItem(elementMatrix);
-  const variantRoll = Math.random();
+  const variantRoll = randomSource();
   let renderRank = 'Core';
   let renderTier = 'rarity-common';
   let isSR = false;
@@ -573,6 +623,7 @@ function finalizeCharacter() {
 
   const strongestHero = {
     name: finalHeroName,
+    code: formatHeroCode(seed),
     rarityRank: renderRank,
     variantMarker: isSSR ? '++' : isSR ? '+' : '',
     className: selectedClass.name,
@@ -603,6 +654,7 @@ function finalizeCharacter() {
   button.innerText = 'PRESS SPACE TO ROLL';
   isRolling = false;
   saveGameState();
+  randomSource = previousRandomSource;
 }
 
 function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, weapon, rank) {
@@ -633,6 +685,19 @@ window.addEventListener('keydown', (event) => {
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
 document.getElementById('reset-button')?.addEventListener('click', resetGame);
+document.getElementById('battle-button')?.addEventListener('click', battleCode);
+
+document.getElementById('hero-code-input')?.addEventListener('input', (event) => {
+  const digits = event.target.value.replace(/\D/g, '').slice(0, 9);
+  event.target.value = digits.replace(/(\d{3})(?=\d)/g, '$1-');
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Tab' && !event.shiftKey) {
+    event.preventDefault();
+    toggleCodePage();
+  }
+});
 
 window.addEventListener('load', () => {
   const loader = document.getElementById('startup-loader');

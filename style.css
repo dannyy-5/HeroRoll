@@ -214,6 +214,31 @@ body::before {
   margin-top: 12px;
 }
 
+.eq-code-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(246, 215, 122, 0.28);
+  border-radius: 10px;
+  background: rgba(246, 215, 122, 0.04);
+}
+
+.eq-code-wrap span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.eq-code-wrap strong {
+  color: var(--gold);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+}
+
 .eq-power-value {
   font-size: 1.3rem;
   font-weight: 700;
@@ -223,6 +248,71 @@ body::before {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.code-page {
+  display: none;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.app-shell.code-mode .game-panel {
+  display: none;
+}
+
+.app-shell.code-mode .code-page {
+  display: flex;
+  grid-column: 2;
+}
+
+.code-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px;
+  background: linear-gradient(180deg, rgba(26, 29, 46, 0.96), rgba(12, 14, 23, 0.98));
+  border: 1px solid rgba(246, 215, 122, 0.18);
+  border-radius: 20px;
+}
+
+.code-help {
+  max-width: 38rem;
+  margin: -4px 0 8px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.code-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-code-input {
+  width: min(100%, 360px);
+  border: 1px solid rgba(246, 215, 122, 0.32);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.4rem;
+  letter-spacing: 0.14em;
+}
+
+.hero-code-input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.battle-result {
+  min-height: 1.5em;
+  color: var(--gold);
+  font-weight: 700;
 }
 
 .top-bar {
@@ -705,6 +795,10 @@ button:disabled {
 
   .stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell.code-mode .code-page {
+    grid-column: 1;
   }
 }
 
