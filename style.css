@@ -183,24 +183,33 @@ body::before {
 
 .eq-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .eq-grid div, .eq-power-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 10px;
-  padding: 10px;
+  padding: 11px 12px;
 }
 
 .eq-grid span, .eq-power-wrap span {
-  display: block;
+  flex-shrink: 0;
   color: var(--muted);
   font-size: 0.72rem;
-  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.eq-grid strong, .eq-power-wrap strong {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .eq-power-wrap {
