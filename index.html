@@ -13,12 +13,17 @@
       <div class="loader-subtitle">Summoning champions...</div>
     </div>
 
+    <button id="reset-button" class="reset-button" type="button" title="Reset saved game data">Reset</button>
+
     <div class="app-shell single-page">
       <aside class="panel left-panel">
         <div class="panel-title">Strongest Hero</div>
         <div id="eq-empty" class="eq-empty">No legendary hero yet...</div>
         <div id="eq-card" class="eq-card-hidden">
-          <div id="eq-name" class="eq-hero-name rarity-common">-</div>
+          <div class="eq-rarity-row">
+            <div id="eq-name" class="eq-hero-name rarity-common">-</div>
+            <div id="eq-rarity-badge" class="eq-rarity-badge rarity-common">C</div>
+          </div>
           <div class="eq-grid">
             <div><span>Class</span><strong id="eq-class">-</strong></div>
             <div><span>Element</span><strong id="eq-element">-</strong></div>
@@ -41,27 +46,125 @@
         <div class="character-card">
           <div class="hero-header">
             <div id="hero-name" class="hero-name">Ready to Roll</div>
-            <div id="element-tier" class="element-tier">Core</div>
+            <div id="element-tier" class="element-tier rarity-common">Core</div>
+          </div>
+
+          <div class="rarity-banner">
+            <span class="rarity-banner-label">Rarity</span>
+            <span id="hero-rarity" class="hero-rarity rarity-common">Core</span>
           </div>
 
           <div id="arena-prompt" class="arena-prompt">Press Space or tap the button to summon a hero.</div>
 
           <div class="stat-grid">
-            <div class="stat-box"><span>Class</span><strong id="stat-Class">-</strong></div>
-            <div class="stat-box"><span>Element</span><strong id="stat-Element">-</strong></div>
-            <div class="stat-box"><span>Weapon</span><strong id="stat-Weapon">-</strong></div>
-            <div class="stat-box"><span>Age</span><strong id="stat-Age">-</strong><small id="stat-Age-max" class="stat-max">Max 1000</small></div>
-            <div class="stat-box"><span>Health</span><strong id="stat-Health">-</strong><small id="stat-Health-max" class="stat-max">Max 300</small></div>
-            <div class="stat-box"><span>Attack</span><strong id="stat-Attack">-</strong><small id="stat-Attack-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Defense</span><strong id="stat-Defense">-</strong><small id="stat-Defense-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Regen</span><strong id="stat-Regeneration">-</strong><small id="stat-Regeneration-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Speed</span><strong id="stat-Speed">-</strong><small id="stat-Speed-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Critical</span><strong id="stat-Critical">-</strong><small id="stat-Critical-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Luck</span><strong id="stat-Luck">-</strong><small id="stat-Luck-max" class="stat-max">Max 100</small></div>
-            <div class="stat-box"><span>Focus</span><strong id="stat-Focus">-</strong><small id="stat-Focus-max" class="stat-max">Max 100</small></div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Class</span>
+                <span class="stat-tag">Role</span>
+              </div>
+              <strong id="stat-Class">-</strong>
+              <small class="stat-effect">Primary battle role and combat style.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Element</span>
+                <span class="stat-tag">Affinity</span>
+              </div>
+              <strong id="stat-Element">-</strong>
+              <small class="stat-effect">Elemental theme and trait identity.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Weapon</span>
+                <span class="stat-tag">Gear</span>
+              </div>
+              <strong id="stat-Weapon">-</strong>
+              <small class="stat-effect">Main weapon and attack-side bonus.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Age</span>
+                <span class="stat-tag">Timeline</span>
+              </div>
+              <strong id="stat-Age">-</strong>
+              <small id="stat-Age-max" class="stat-max">Max 1000</small>
+              <small class="stat-effect">Experience age and martial history.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Health</span>
+                <span class="stat-tag">Vitality</span>
+              </div>
+              <strong id="stat-Health">-</strong>
+              <small id="stat-Health-max" class="stat-max">Max 300</small>
+              <small class="stat-effect">Absorbs damage and keeps the champion standing.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Attack</span>
+                <span class="stat-tag">Power</span>
+              </div>
+              <strong id="stat-Attack">-</strong>
+              <small id="stat-Attack-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Raw strike force and direct burst output.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Defense</span>
+                <span class="stat-tag">Guard</span>
+              </div>
+              <strong id="stat-Defense">-</strong>
+              <small id="stat-Defense-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Reduces incoming damage and stabilizes a line.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Regen</span>
+                <span class="stat-tag">Recovery</span>
+              </div>
+              <strong id="stat-Regeneration">-</strong>
+              <small id="stat-Regeneration-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Restores health and prolongs sustained combat.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Speed</span>
+                <span class="stat-tag">Mobility</span>
+              </div>
+              <strong id="stat-Speed">-</strong>
+              <small id="stat-Speed-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Movement, agility, and positioning advantage.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Critical</span>
+                <span class="stat-tag">Strike</span>
+              </div>
+              <strong id="stat-Critical">-</strong>
+              <small id="stat-Critical-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Improves critical-hit chance and burst damage.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Luck</span>
+                <span class="stat-tag">Fortune</span>
+              </div>
+              <strong id="stat-Luck">-</strong>
+              <small id="stat-Luck-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Boosts lucky outcomes and rare edge-case reactions.</small>
+            </div>
+            <div class="stat-box rarity-common">
+              <div class="stat-box-header">
+                <span class="stat-label">Focus</span>
+                <span class="stat-tag">Control</span>
+              </div>
+              <strong id="stat-Focus">-</strong>
+              <small id="stat-Focus-max" class="stat-max">Max 100</small>
+              <small class="stat-effect">Focus, discipline, and spell or technique precision.</small>
+            </div>
           </div>
 
-          <div class="power-row">
+          <div class="power-row rarity-common">
             <div class="power-label">Total Power</div>
             <div id="total-power" class="power-value rarity-common">-</div>
           </div>

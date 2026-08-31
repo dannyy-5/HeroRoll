@@ -4,12 +4,12 @@ const prefixes = ['Gorgon', 'Shadow', 'Light', 'Iron', 'Storm', 'Frost', 'Flame'
 const suffixes = ['Thorne', 'weaver', 'heart', 'breaker', 'fury', 'strider', 'gaze', 'bane', 'shard', 'bound', 'fall', 'fist', 'forge', 'crest', 'knight', 'seer', 'warden', 'rune', 'ghost', 'storm'];
 
 const rarityNames = {
-  common: 'Common',
-  rare: 'Rare',
-  epic: 'Epic',
-  legendary: 'Legendary',
-  sr: 'SR',
-  ssr: 'SSR'
+  common: 'C',
+  rare: 'R',
+  superRare: 'SR',
+  shinySuperRare: 'SSR',
+  ultraRare: 'UR',
+  hyperRare: 'HR'
 };
 
 const variantNames = {
@@ -117,12 +117,12 @@ function getDefaultHeroState() {
 }
 
 function getTierLabel(power) {
-  if (power >= 900) return { label: 'SSR', css: 'rarity-ssr', rank: 'SSR' };
-  if (power >= 680) return { label: 'SR', css: 'rarity-sr', rank: 'SR' };
-  if (power >= 470) return { label: 'Legendary', css: 'rarity-legendary', rank: 'Legendary' };
-  if (power >= 370) return { label: 'Epic', css: 'rarity-epic', rank: 'Epic' };
-  if (power >= 250) return { label: 'Rare', css: 'rarity-rare', rank: 'Rare' };
-  return { label: 'Common', css: 'rarity-common', rank: 'Core' };
+  if (power >= 900) return { label: 'HR', css: 'rarity-hyper-rare', rank: 'HR', fullName: 'Hyper Rare' };
+  if (power >= 680) return { label: 'UR', css: 'rarity-ultra-rare', rank: 'UR', fullName: 'Ultra Rare' };
+  if (power >= 470) return { label: 'SSR', css: 'rarity-shiny-super-rare', rank: 'SSR', fullName: 'Shiny Super Rare' };
+  if (power >= 370) return { label: 'SR', css: 'rarity-super-rare', rank: 'SR', fullName: 'Super Rare' };
+  if (power >= 250) return { label: 'R', css: 'rarity-rare', rank: 'R', fullName: 'Rare' };
+  return { label: 'C', css: 'rarity-common', rank: 'C', fullName: 'Common' };
 }
 
 function applyClassBonuses(baseStats, className) {
@@ -137,10 +137,13 @@ function applyClassBonuses(baseStats, className) {
 function saveGameState() {
   const strongestPower = document.getElementById('eq-power');
   const totalPower = document.getElementById('total-power');
+  const eqRarityBadge = document.getElementById('eq-rarity-badge');
   const state = {
     highestPowerEver,
     strongestHero: document.getElementById('eq-name').innerText !== '-' ? {
       name: document.getElementById('eq-name').innerText,
+      rarityRank: eqRarityBadge ? eqRarityBadge.dataset.rank || 'C' : 'C',
+      variantMarker: eqRarityBadge ? eqRarityBadge.dataset.variant || '' : '',
       className: document.getElementById('eq-class').innerText,
       element: document.getElementById('eq-element').innerText,
       weapon: document.getElementById('eq-weapon').innerText,
@@ -179,6 +182,61 @@ function saveGameState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function getRarityClassName(powerOrTier) {
+  const value = typeof powerOrTier === 'number' ? powerOrTier : Number(powerOrTier || 0);
+  if (value >= 900) return 'rarity-hyper-rare';
+  if (value >= 680) return 'rarity-ultra-rare';
+  if (value >= 470) return 'rarity-shiny-super-rare';
+  if (value >= 370) return 'rarity-super-rare';
+  if (value >= 250) return 'rarity-rare';
+  return 'rarity-common';
+}
+
+function getRarityInfo(powerValue) {
+  const rarityClass = getRarityClassName(powerValue);
+  const palette = {
+    'rarity-common': { label: 'C', fullName: 'Common', color: '#d7d6d8', glow: 'rgba(215, 214, 216, 0.38)' },
+    'rarity-rare': { label: 'R', fullName: 'Rare', color: '#5aa9ff', glow: 'rgba(90, 169, 255, 0.38)' },
+    'rarity-super-rare': { label: 'SR', fullName: 'Super Rare', color: '#35d7a1', glow: 'rgba(53, 215, 161, 0.38)' },
+    'rarity-shiny-super-rare': { label: 'SSR', fullName: 'Shiny Super Rare', color: '#b57cff', glow: 'rgba(181, 124, 255, 0.42)' },
+    'rarity-ultra-rare': { label: 'UR', fullName: 'Ultra Rare', color: '#ffb347', glow: 'rgba(255, 179, 71, 0.42)' },
+    'rarity-hyper-rare': { label: 'HR', fullName: 'Hyper Rare', color: '#ff5d7a', glow: 'rgba(255, 93, 122, 0.45)' }
+  };
+
+  return { ...palette[rarityClass], rarityClass };
+}
+
+function applyRarityVisuals(powerValue) {
+  const info = getRarityInfo(powerValue);
+  const rarityTokens = ['rarity-common', 'rarity-rare', 'rarity-super-rare', 'rarity-shiny-super-rare', 'rarity-ultra-rare', 'rarity-hyper-rare'];
+  const targetEls = [
+    document.querySelector('.character-card'),
+    document.querySelector('.power-row'),
+    document.getElementById('hero-rarity'),
+    ...Array.from(document.querySelectorAll('.panel')),
+    ...Array.from(document.querySelectorAll('.stat-box'))
+  ].filter(Boolean);
+
+  targetEls.forEach((el) => {
+    rarityTokens.forEach((token) => el.classList.remove(token));
+    el.classList.add(info.rarityClass);
+  });
+
+  document.documentElement.style.setProperty('--active-rarity-color', info.color);
+  document.documentElement.style.setProperty('--active-rarity-glow', info.glow);
+
+  const heroRarity = document.getElementById('hero-rarity');
+  if (heroRarity) heroRarity.textContent = info.label;
+
+  const tierBadge = document.getElementById('element-tier');
+  if (tierBadge) {
+    const variantSuffix = tierBadge.dataset.variant === 'ssr' ? '++' : tierBadge.dataset.variant === 'sr' ? '+' : 'C';
+    tierBadge.textContent = variantSuffix;
+    tierBadge.dataset.rank = info.label;
+    tierBadge.title = `${info.fullName} hero`;
+  }
+}
+
 function renderHeroCard(hero) {
   document.getElementById('hero-name').innerText = hero.name;
   document.getElementById('hero-class-desc').innerText = hero.description;
@@ -198,12 +256,19 @@ function renderHeroCard(hero) {
   document.getElementById('total-power').className = 'power-value ' + hero.tierClass;
 
   const tierBadge = document.getElementById('element-tier');
-  tierBadge.innerText = hero.tierLabel || (hero.isSSR ? 'SSR' : hero.isSR ? 'SR' : 'Core');
-  tierBadge.dataset.rank = hero.tierRank || 'Core';
-  tierBadge.dataset.variant = hero.variantName || 'None';
-  tierBadge.classList.remove('sr-active', 'ssr-active');
-  if (hero.isSSR) tierBadge.classList.add('ssr-active');
-  else if (hero.isSR) tierBadge.classList.add('sr-active');
+  const variantToken = hero.isSSR ? '++' : hero.isSR ? '+' : 'C';
+  tierBadge.innerText = variantToken;
+  tierBadge.dataset.rank = hero.tierRank || 'C';
+  tierBadge.dataset.variant = hero.isSSR ? 'ssr' : hero.isSR ? 'sr' : 'core';
+  tierBadge.classList.remove('sr-active', 'ssr-active', 'rarity-common', 'rarity-rare', 'rarity-super-rare', 'rarity-shiny-super-rare', 'rarity-ultra-rare', 'rarity-hyper-rare');
+  if (hero.isSSR) {
+    tierBadge.classList.add('ssr-active', 'rarity-shiny-super-rare');
+  } else if (hero.isSR) {
+    tierBadge.classList.add('sr-active', 'rarity-super-rare');
+  } else {
+    tierBadge.classList.add('rarity-common');
+  }
+  applyRarityVisuals(Number(hero.power) || 0);
   document.getElementById('arena-prompt').style.display = hero.arenaPromptVisible ? 'block' : 'none';
 }
 
@@ -214,10 +279,21 @@ function renderStrongestHero(hero) {
     return;
   }
 
+  const rarityRank = hero.rarityRank || hero.tierRank || 'C';
+  const variantMarker = hero.variantMarker || (hero.isSSR ? '++' : hero.isSR ? '+' : '');
+  const badgeText = `${rarityRank}${variantMarker}`;
+
   document.getElementById('eq-empty').style.display = 'none';
   const eqCard = document.getElementById('eq-card');
   eqCard.className = 'eq-card-visible';
   document.getElementById('eq-name').innerText = hero.name;
+  const eqRarityBadge = document.getElementById('eq-rarity-badge');
+  if (eqRarityBadge) {
+    eqRarityBadge.textContent = badgeText;
+    eqRarityBadge.dataset.rank = rarityRank;
+    eqRarityBadge.dataset.variant = variantMarker;
+    eqRarityBadge.className = `eq-rarity-badge ${hero.tierClass || 'rarity-common'}`;
+  }
   document.getElementById('eq-class').innerText = hero.className;
   document.getElementById('eq-element').innerText = hero.element;
   document.getElementById('eq-weapon').innerText = hero.weapon;
@@ -225,6 +301,18 @@ function renderStrongestHero(hero) {
   document.getElementById('eq-power').innerText = hero.power;
   document.getElementById('eq-power').className = 'eq-power-value ' + (hero.tierClass || 'rarity-common');
   document.getElementById('eq-name').className = 'eq-hero-name ' + (hero.tierClass || 'rarity-common');
+}
+
+function resetGame() {
+  if (!window.confirm('Reset your saved heroes and roll history?')) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  highestPowerEver = 0;
+  historyEntries = [];
+  renderHeroCard(getDefaultHeroState());
+  renderStrongestHero(null);
+  renderHistoryPage();
+  saveGameState();
 }
 
 function renderHistoryList() {
@@ -436,16 +524,16 @@ function finalizeCharacter() {
 
   const tBadge = document.getElementById('element-tier');
   tBadge.dataset.rank = renderRank;
-  tBadge.dataset.variant = variantName;
+  tBadge.dataset.variant = isSSR ? 'ssr' : isSR ? 'sr' : 'core';
   tBadge.classList.remove('sr-active', 'ssr-active');
   if (isSSR) {
-    tBadge.innerText = 'SSR';
+    tBadge.innerText = '++';
     tBadge.classList.add('ssr-active');
   } else if (isSR) {
-    tBadge.innerText = 'SR';
+    tBadge.innerText = '+';
     tBadge.classList.add('sr-active');
   } else {
-    tBadge.innerText = 'Core';
+    tBadge.innerText = 'C';
   }
 
   let totalCombatPower = hp + atk + def + reg + speed + crit + luck + focus;
@@ -460,9 +548,12 @@ function finalizeCharacter() {
   powerEl.innerText = totalCombatPower;
   powerEl.className = 'power-value';
   powerEl.classList.add(renderTier);
+  applyRarityVisuals(totalCombatPower);
 
   const strongestHero = {
     name: finalHeroName,
+    rarityRank: renderRank,
+    variantMarker: isSSR ? '++' : isSR ? '+' : '',
     className: selectedClass.name,
     element: finalElementName,
     weapon: finalWeaponObj.name,
@@ -512,13 +603,14 @@ window.addEventListener('keydown', (event) => {
 });
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
+document.getElementById('reset-button')?.addEventListener('click', resetGame);
 
 window.addEventListener('load', () => {
   const loader = document.getElementById('startup-loader');
   if (loader) {
     window.setTimeout(() => {
       loader.classList.add('is-hidden');
-    }, 1200);
+    }, 3000);
   }
 });
 
