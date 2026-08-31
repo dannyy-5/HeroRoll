@@ -1,5 +1,4 @@
 const STORAGE_KEY = 'heroroll-save-v1';
-const LEADERBOARD_URL = 'https://raw.githubusercontent.com/dannyy-5/HeroRoll/main/data/leaderboard.json';
 const GITHUB_ISSUE_URL = 'https://github.com/dannyy-5/HeroRoll/issues/new?template=score-submission.yml';
 
 const prefixes = ['Gorgon', 'Shadow', 'Light', 'Iron', 'Storm', 'Frost', 'Flame', 'Void', 'Swift', 'Apex', 'Dusk', 'Dread', 'Ember', 'Rune', 'Wraith', 'Moon', 'Solar', 'Rift', 'Titan', 'Nova'];
@@ -88,10 +87,6 @@ const classesData = [
 let isRolling = false;
 let highestPowerEver = 0;
 let historyEntries = [];
-let playerLevel = 1;
-let playerWins = 0;
-let currentEnemy = null;
-let currentBattleLog = [];
 let heroCollection = [];
 
 const canvas = document.getElementById('diceCanvas');
@@ -151,8 +146,6 @@ function saveGameState() {
   const totalPower = document.getElementById('total-power');
   const state = {
     highestPowerEver,
-    playerLevel,
-    playerWins,
     heroCollection,
     strongestHero: document.getElementById('eq-name').innerText !== '-' ? {
       name: document.getElementById('eq-name').innerText,
@@ -286,23 +279,17 @@ function renderHistoryList() {
 }
 
 function updatePlayerHUD() {
-  const rankText = playerLevel >= 5 ? 'Adept' : playerLevel >= 3 ? 'Rising' : 'Fresh';
-  document.getElementById('player-level').textContent = playerLevel;
-  document.getElementById('player-wins').textContent = playerWins;
-  document.getElementById('player-rank').textContent = rankText;
-
   const dashboardLevel = document.getElementById('dashboard-level');
-  if (dashboardLevel) dashboardLevel.textContent = playerLevel;
+  if (dashboardLevel) dashboardLevel.textContent = '—';
   const dashboardWins = document.getElementById('dashboard-wins');
-  if (dashboardWins) dashboardWins.textContent = playerWins;
+  if (dashboardWins) dashboardWins.textContent = '—';
   const dashboardRank = document.getElementById('dashboard-rank');
-  if (dashboardRank) dashboardRank.textContent = rankText;
+  if (dashboardRank) dashboardRank.textContent = 'Core';
   const dashboardCollection = document.getElementById('dashboard-collection');
   if (dashboardCollection) dashboardCollection.textContent = heroCollection.length;
 
   renderDashboardPage();
   renderHistoryPage();
-  renderFavoritesPage();
 }
 
 function setupPageTabs() {
@@ -320,15 +307,14 @@ function setupPageTabs() {
 function renderDashboardPage() {
   const bestName = document.getElementById('eq-name')?.innerText || 'No hero summoned yet';
   const bestPower = document.getElementById('eq-power')?.innerText || '0';
-  const battleLabel = currentEnemy ? `${currentEnemy.name} • ${currentEnemy.power} power` : 'No battle started yet.';
 
   const bestHeroNode = document.getElementById('dashboard-best-hero');
   if (bestHeroNode) {
-    bestHeroNode.textContent = bestName === '-' ? 'No hero summoned yet.' : `${bestName} • ${bestPower} power`;
+    bestHeroNode.textContent = bestName === '-' ? 'No hero yet' : `${bestName} • ${bestPower}`;
   }
 
   const battleNode = document.getElementById('dashboard-battle');
-  if (battleNode) battleNode.textContent = battleLabel;
+  if (battleNode) battleNode.textContent = 'Ready';
 }
 
 function renderHistoryPage() {
@@ -358,96 +344,12 @@ function renderHistoryPage() {
   });
 }
 
-function renderFavoritesPage() {
-  const favoriteList = document.getElementById('favorites-page-list');
-  const bestCardName = document.getElementById('favorites-best-name');
-  const bestCardMeta = document.getElementById('favorites-best-meta');
-  const count = document.getElementById('favorites-page-count');
-
-  if (count) count.textContent = `${heroCollection.length} saved`;
-  if (bestCardName) {
-    const strongestName = document.getElementById('eq-name')?.innerText || 'No hero yet';
-    const strongestPower = document.getElementById('eq-power')?.innerText || '0';
-    bestCardName.textContent = strongestName === '-' ? 'No hero yet' : strongestName;
-    bestCardMeta.textContent = strongestName === '-' ? 'Roll a champion to begin' : `${strongestPower} power`;
-  }
-
-  if (!favoriteList) return;
-  favoriteList.innerHTML = '';
-
-  if (!heroCollection.length) {
-    favoriteList.innerHTML = '<div class="favorite-card"><div class="favorite-card-main"><strong>No favorites yet</strong><small>Your saved heroes will appear here.</small></div></div>';
-    return;
-  }
-
-  heroCollection.forEach((hero) => {
-    const item = document.createElement('div');
-    item.className = 'favorite-card';
-    item.innerHTML = `
-      <div class="favorite-card-main">
-        <strong>${hero.name}</strong>
-        <small>${hero.rank || 'Hero'}</small>
-      </div>
-      <div class="favorite-card-rank">${hero.rank || 'Core'}</div>
-    `;
-    favoriteList.appendChild(item);
-  });
-}
-
-function renderPageLeaderboard() {
-  const sideStatus = document.getElementById('leaderboard-status');
-  const sideList = document.getElementById('leaderboard-list');
-  const pageStatus = document.getElementById('page-leaderboard-status');
-  const pageList = document.getElementById('page-leaderboard-list');
-
-  const listTargets = [sideList, pageList].filter(Boolean);
-  const statusTargets = [sideStatus, pageStatus].filter(Boolean);
-
-  if (!listTargets.length && !statusTargets.length) return;
-
-  statusTargets.forEach((status) => {
-    status.textContent = 'Loading leaderboard...';
-  });
-
-  listTargets.forEach((list) => {
-    list.innerHTML = '<div class="leaderboard-entry"><div class="leaderboard-name">Loading...</div></div>';
-  });
-}
-
-function renderLeaderboardRows(entries, list, status) {
-  list.innerHTML = '';
-
-  if (!entries.length) {
-    list.innerHTML = '<div class="leaderboard-entry"><div class="leaderboard-name">No scores yet</div></div>';
-    status.textContent = 'Waiting for hourly sync';
-    return;
-  }
-
-  entries.slice(0, 10).forEach((entry, index) => {
-    const row = document.createElement('div');
-    row.className = 'leaderboard-entry';
-    row.innerHTML = `
-      <div class="rank-badge">${index + 1}</div>
-      <div>
-        <div class="leaderboard-name">${entry.name}</div>
-        <div class="leaderboard-meta">${entry.hero} · ${entry.date}</div>
-      </div>
-      <div class="leaderboard-score">${entry.score}</div>
-    `;
-    list.appendChild(row);
-  });
-
-  status.textContent = `Updated ${new Date().toISOString()}`;
-}
-
 function loadGameState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const state = JSON.parse(raw);
     if (typeof state.highestPowerEver === 'number') highestPowerEver = state.highestPowerEver;
-    if (typeof state.playerLevel === 'number') playerLevel = state.playerLevel;
-    if (typeof state.playerWins === 'number') playerWins = state.playerWins;
     if (Array.isArray(state.heroCollection)) heroCollection = state.heroCollection;
     if (Array.isArray(state.history)) historyEntries = state.history;
 
@@ -637,8 +539,6 @@ function finalizeCharacter() {
   const finalWeaponObj = getRandomItem(weaponsData);
   const targetElementPair = getRandomItem(elementMatrix);
   const variantRoll = Math.random();
-  const levelBonus = playerLevel * 15;
-
   let renderRank = 'Core';
   let renderTier = 'rarity-common';
   let isSR = false;
@@ -712,7 +612,7 @@ function finalizeCharacter() {
     tBadge.innerText = 'Core';
   }
 
-  let totalCombatPower = hp + atk + def + reg + speed + crit + luck + focus + levelBonus;
+  let totalCombatPower = hp + atk + def + reg + speed + crit + luck + focus;
   totalCombatPower += finalWeaponObj.bonus;
   if (isSR) totalCombatPower += 90;
   if (isSSR) totalCombatPower += 180;
@@ -775,111 +675,6 @@ function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, 
   saveGameState();
 }
 
-function startBattle() {
-  const currentHeroName = document.getElementById('hero-name')?.innerText || 'Hero';
-  const currentHeroPower = Number(document.getElementById('total-power')?.innerText || 0);
-
-  if (!currentHeroPower || currentHeroPower <= 0) {
-    document.getElementById('battle-log').textContent = 'Roll a hero before starting a battle.';
-    return;
-  }
-
-  const enemyName = getRandomItem(['Goblin Warlord', 'Frost Drake', 'Bone Titan', 'Ember Seraph', 'Wraith King']);
-  const enemyPower = Math.max(80, Math.floor(currentHeroPower * (0.7 + Math.random() * 0.8)));
-  currentEnemy = { name: enemyName, power: enemyPower };
-
-  const heroWins = currentHeroPower >= enemyPower;
-  const log = document.getElementById('battle-log');
-  document.getElementById('enemy-name').textContent = enemyName;
-  document.getElementById('enemy-power').textContent = enemyPower;
-
-  if (heroWins) {
-    playerWins += 1;
-    playerLevel += 1;
-    log.textContent = `${currentHeroName} defeats ${enemyName} and gains a level!`;
-  } else {
-    log.textContent = `${currentHeroName} loses to ${enemyName}. The next hero will rise stronger.`;
-  }
-
-  updatePlayerHUD();
-  saveGameState();
-}
-
-function levelUpHero() {
-  const currentPower = Number(document.getElementById('total-power')?.innerText || 0);
-  if (!currentPower || currentPower <= 0) {
-    document.getElementById('battle-log').textContent = 'No hero to level up yet.';
-    return;
-  }
-
-  playerLevel += 1;
-  const powerNode = document.getElementById('total-power');
-  const upgraded = currentPower + 30 + playerLevel * 5;
-  powerNode.innerText = upgraded;
-  updatePlayerHUD();
-  document.getElementById('battle-log').textContent = `Level up! ${powerNode.innerText} total power.`;
-  saveGameState();
-}
-
-async function loadLeaderboard() {
-  const statusTargets = [
-    document.getElementById('leaderboard-status'),
-    document.getElementById('page-leaderboard-status')
-  ].filter(Boolean);
-
-  const listTargets = [
-    document.getElementById('leaderboard-list'),
-    document.getElementById('page-leaderboard-list')
-  ].filter(Boolean);
-
-  if (!statusTargets.length || !listTargets.length) return;
-
-  try {
-    statusTargets.forEach((status) => {
-      status.textContent = 'Loading leaderboard...';
-    });
-
-    const response = await fetch(`${LEADERBOARD_URL}?cache=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    const entries = Array.isArray(data.entries) ? data.entries : [];
-
-    statusTargets.forEach((status) => {
-      status.textContent = `Updated ${data.updatedAt || 'recently'}`;
-    });
-
-    listTargets.forEach((list) => {
-      list.innerHTML = '';
-      if (!entries.length) {
-        list.innerHTML = '<div class="leaderboard-entry"><div class="leaderboard-name">No scores yet</div></div>';
-        return;
-      }
-
-      entries.slice(0, 10).forEach((entry, index) => {
-        const row = document.createElement('div');
-        row.className = 'leaderboard-entry';
-        row.innerHTML = `
-          <div class="rank-badge">${index + 1}</div>
-          <div>
-            <div class="leaderboard-name">${entry.name}</div>
-            <div class="leaderboard-meta">${entry.hero} · ${entry.date}</div>
-          </div>
-          <div class="leaderboard-score">${entry.score}</div>
-        `;
-        list.appendChild(row);
-      });
-    });
-  } catch (error) {
-    console.warn('Leaderboard failed to load:', error);
-    statusTargets.forEach((status) => {
-      status.textContent = 'Leaderboard offline';
-    });
-    listTargets.forEach((list) => {
-      list.innerHTML = '<div class="leaderboard-entry"><div class="leaderboard-name">Sync will update hourly</div></div>';
-    });
-  }
-}
-
 function submitCurrentScore() {
   const currentName = document.getElementById('hero-name')?.innerText || 'Hero';
   const currentPower = document.getElementById('total-power')?.innerText || '0';
@@ -901,8 +696,6 @@ window.addEventListener('keydown', (event) => {
 });
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
-document.getElementById('battle-button')?.addEventListener('click', startBattle);
-document.getElementById('level-button')?.addEventListener('click', levelUpHero);
 document.getElementById('submit-score-btn')?.addEventListener('click', submitCurrentScore);
 setupPageTabs();
 
@@ -910,7 +703,5 @@ updatePlayerHUD();
 renderCollection();
 renderDashboardPage();
 renderHistoryPage();
-renderFavoritesPage();
 loadGameState();
-loadLeaderboard();
 

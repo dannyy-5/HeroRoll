@@ -11,8 +11,6 @@
       <button class="page-tab active" type="button" data-page="index">Index</button>
       <button class="page-tab" type="button" data-page="roll">Roll</button>
       <button class="page-tab" type="button" data-page="history">History</button>
-      <button class="page-tab" type="button" data-page="favorites">Best Hero</button>
-      <button class="page-tab" type="button" data-page="leaderboard">Leaderboard</button>
     </div>
 
     <div class="page-stack">
@@ -24,21 +22,10 @@
           </div>
 
           <div class="overview-grid">
-            <div class="overview-stat"><span>Level</span><strong id="dashboard-level">1</strong></div>
-            <div class="overview-stat"><span>Wins</span><strong id="dashboard-wins">0</strong></div>
-            <div class="overview-stat"><span>Rank</span><strong id="dashboard-rank">Fresh</strong></div>
-            <div class="overview-stat"><span>Collection</span><strong id="dashboard-collection">0</strong></div>
-          </div>
-
-          <div class="overview-panels">
-            <div class="overview-block">
-              <h3>Best hero</h3>
-              <p id="dashboard-best-hero">No hero summoned yet.</p>
-            </div>
-            <div class="overview-block">
-              <h3>Last battle</h3>
-              <p id="dashboard-battle">No battle started yet.</p>
-            </div>
+            <div class="overview-stat"><span>Heroes</span><strong id="dashboard-collection">0</strong></div>
+            <div class="overview-stat"><span>Best</span><strong id="dashboard-best-hero">No hero yet</strong></div>
+            <div class="overview-stat"><span>Rarity</span><strong id="dashboard-rank">Core</strong></div>
+            <div class="overview-stat"><span>Status</span><strong id="dashboard-battle">Ready</strong></div>
           </div>
         </div>
       </section>
@@ -71,7 +58,7 @@
           <main class="game-panel">
             <div class="top-bar">
               <div class="brand">HeroRoll</div>
-              <div class="tag">Github-only leaderboard</div>
+              <div class="tag">Random hero roller</div>
             </div>
 
             <div class="character-card">
@@ -110,35 +97,10 @@
 
               <div class="button-row">
                 <button id="roll-button" type="button">PRESS SPACE TO ROLL</button>
-                <button id="battle-button" type="button" class="secondary">Battle Enemy</button>
-                <button id="level-button" type="button" class="secondary">Level Up</button>
                 <button id="submit-score-btn" type="button" class="secondary">Submit Score to GitHub</button>
-              </div>
-
-              <div class="battle-panel">
-                <div class="panel-subtitle">Arena</div>
-                <div class="battle-header">
-                  <div>
-                    <div class="battle-label">Enemy</div>
-                    <div id="enemy-name" class="enemy-name">Awaiting battle</div>
-                  </div>
-                  <div class="battle-score" id="enemy-power">0</div>
-                </div>
-                <div id="battle-log" class="battle-log">No battle started yet.</div>
               </div>
             </div>
           </main>
-
-          <aside class="panel right-panel">
-            <div class="panel-title">Leaderboard</div>
-            <div id="leaderboard-status" class="leaderboard-status">Loading leaderboard...</div>
-            <div class="leaderboard-summary">
-              <div><span>Level</span><strong id="player-level">1</strong></div>
-              <div><span>Wins</span><strong id="player-wins">0</strong></div>
-              <div><span>Rank</span><strong id="player-rank">-</strong></div>
-            </div>
-            <div id="leaderboard-list" class="leaderboard-list"></div>
-          </aside>
         </div>
       </section>
 
@@ -152,32 +114,6 @@
         </div>
       </section>
 
-      <section id="page-favorites" class="page">
-        <div class="page-card">
-          <div class="page-heading">
-            <h2>Best Hero & Favorites</h2>
-            <span id="favorites-page-count">0 saved</span>
-          </div>
-
-          <div id="favorite-best-card" class="favorite-best-card">
-            <strong id="favorites-best-name">No hero yet</strong>
-            <span id="favorites-best-meta">Roll a champion to begin</span>
-          </div>
-
-          <div id="favorites-page-list" class="favorites-grid"></div>
-        </div>
-      </section>
-
-      <section id="page-leaderboard" class="page">
-        <div class="page-card leaderboard-page-card">
-          <div class="page-heading">
-            <h2>Leaderboard</h2>
-            <span>Public rankings</span>
-          </div>
-          <div id="page-leaderboard-status" class="leaderboard-status">Loading leaderboard...</div>
-          <div id="page-leaderboard-list" class="page-leaderboard-list"></div>
-        </div>
-      </section>
     </div>
 
     <script src="script.js"></script>
