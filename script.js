@@ -279,47 +279,12 @@ function renderHistoryList() {
 }
 
 function updatePlayerHUD() {
-  const dashboardLevel = document.getElementById('dashboard-level');
-  if (dashboardLevel) dashboardLevel.textContent = '—';
-  const dashboardWins = document.getElementById('dashboard-wins');
-  if (dashboardWins) dashboardWins.textContent = '—';
-  const dashboardRank = document.getElementById('dashboard-rank');
-  if (dashboardRank) dashboardRank.textContent = 'Core';
-  const dashboardCollection = document.getElementById('dashboard-collection');
-  if (dashboardCollection) dashboardCollection.textContent = heroCollection.length;
-
-  renderDashboardPage();
   renderHistoryPage();
 }
 
-function setupPageTabs() {
-  document.querySelectorAll('.page-tab').forEach((button) => {
-    button.addEventListener('click', () => {
-      const pageName = button.dataset.page;
-      document.querySelectorAll('.page-tab').forEach((tab) => tab.classList.toggle('active', tab === button));
-      document.querySelectorAll('.page').forEach((page) => {
-        page.classList.toggle('active', page.id === `page-${pageName}`);
-      });
-    });
-  });
-}
-
-function renderDashboardPage() {
-  const bestName = document.getElementById('eq-name')?.innerText || 'No hero summoned yet';
-  const bestPower = document.getElementById('eq-power')?.innerText || '0';
-
-  const bestHeroNode = document.getElementById('dashboard-best-hero');
-  if (bestHeroNode) {
-    bestHeroNode.textContent = bestName === '-' ? 'No hero yet' : `${bestName} • ${bestPower}`;
-  }
-
-  const battleNode = document.getElementById('dashboard-battle');
-  if (battleNode) battleNode.textContent = 'Ready';
-}
-
 function renderHistoryPage() {
-  const list = document.getElementById('history-page-list');
-  const count = document.getElementById('history-page-count');
+  const list = document.getElementById('history-panel-list') || document.getElementById('history-page-list');
+  const count = document.getElementById('history-panel-count') || document.getElementById('history-page-count');
   if (count) count.textContent = `${historyEntries.length} entries`;
   if (!list) return;
 
@@ -697,11 +662,9 @@ window.addEventListener('keydown', (event) => {
 
 document.getElementById('roll-button')?.addEventListener('click', startRollSequence);
 document.getElementById('submit-score-btn')?.addEventListener('click', submitCurrentScore);
-setupPageTabs();
 
 updatePlayerHUD();
 renderCollection();
-renderDashboardPage();
 renderHistoryPage();
 loadGameState();
 
