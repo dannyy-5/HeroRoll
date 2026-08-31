@@ -86,12 +86,6 @@ const classesData = [
 let isRolling = false;
 let highestPowerEver = 0;
 let historyEntries = [];
-let rollingPreviewEntry = null;
-
-const canvas = document.getElementById('diceCanvas');
-const ctx = canvas.getContext('2d');
-let diceArray = [];
-let animationId = null;
 
 function getDefaultHeroState() {
   return {
@@ -318,228 +312,13 @@ function getRandomVariantName(type) {
   return getRandomItem(list);
 }
 
-class BirdEyeDice {
-  constructor(x, y) {
-    this.baseX = x;
-    this.baseY = y;
-    this.x = x;
-    this.y = y;
-    this.z = 0;
-    this.size = 18;
-    this.vx = (Math.random() * 7) - 3.5;
-    this.vy = (Math.random() * 7) - 3.5;
-    this.vz = 7 + Math.random() * 6;
-    this.spinX = (Math.random() * 0.8) - 0.4;
-    this.spinY = (Math.random() * 0.8) - 0.4;
-    this.spinZ = (Math.random() * 1.2) - 0.6;
-    this.rollX = Math.random() * Math.PI * 2;
-    this.rollY = Math.random() * Math.PI * 2;
-    this.rollZ = Math.random() * Math.PI * 2;
-    this.currentValue = Math.floor(Math.random() * 6) + 1;
-    this.isSettled = false;
-  }
-
-  rotatePoint(point) {
-    const { x, y, z } = point;
-    const x1 = x * Math.cos(this.rollY) + z * Math.sin(this.rollY);
-    const z1 = -x * Math.sin(this.rollY) + z * Math.cos(this.rollY);
-    const y2 = y * Math.cos(this.rollX) - z1 * Math.sin(this.rollX);
-    const z2 = y * Math.sin(this.rollX) + z1 * Math.cos(this.rollX);
-    const x3 = x1 * Math.cos(this.rollZ) - y2 * Math.sin(this.rollZ);
-    const y3 = x1 * Math.sin(this.rollZ) + y2 * Math.cos(this.rollZ);
-    return { x: x3, y: y3, z: z2 };
-  }
-
-  project(point) {
-    const perspective = 200;
-    const scale = perspective / (perspective + point.z + 100);
-    return {
-      x: this.x + point.x * this.size * scale,
-      y: this.y + point.y * this.size * scale - (this.z * 1.4),
-      z: point.z
-    };
-  }
-
-  update() {
-    if (this.isSettled) {
-      this.x = this.baseX;
-      this.y = this.baseY;
-      this.z = 0;
-      this.vx = 0;
-      this.vy = 0;
-      this.vz = 0;
-      return;
-    }
-
-    this.x += this.vx;
-    this.y += this.vy;
-    this.z += this.vz;
-    this.vx *= 0.984;
-    this.vy *= 0.984;
-    this.vz -= 0.42;
-    this.rollX += this.spinX;
-    this.rollY += this.spinY;
-    this.rollZ += this.spinZ;
-
-    if (this.x > this.baseX + 38) { this.x = this.baseX + 38; this.vx *= -0.5; }
-    if (this.x < this.baseX - 38) { this.x = this.baseX - 38; this.vx *= -0.5; }
-    if (this.y > this.baseY + 28) { this.y = this.baseY + 28; this.vy *= -0.5; }
-    if (this.y < this.baseY - 28) { this.y = this.baseY - 28; this.vy *= -0.5; }
-
-    if (this.z <= 0) {
-      this.z = 0;
-      this.vz *= -0.32;
-      this.currentValue = Math.floor(Math.random() * 6) + 1;
-
-      if (Math.abs(this.vz) < 0.36 && Math.abs(this.vx) < 0.2 && Math.abs(this.vy) < 0.2) {
-        this.isSettled = true;
-        this.vx = 0;
-        this.vy = 0;
-        this.vz = 0;
-        this.x = this.baseX;
-        this.y = this.baseY;
-      }
-    }
-  }
-
-  draw() {
-    const cubeVerts = [
-      { x: -1, y: -1, z: -1 },
-      { x: 1, y: -1, z: -1 },
-      { x: 1, y: 1, z: -1 },
-      { x: -1, y: 1, z: -1 },
-      { x: -1, y: -1, z: 1 },
-      { x: 1, y: -1, z: 1 },
-      { x: 1, y: 1, z: 1 },
-      { x: -1, y: 1, z: 1 }
-    ].map((v) => this.rotatePoint(v));
-
-    const faces = [
-      { indices: [0, 1, 2, 3], color: '#f7c84b' },
-      { indices: [1, 5, 6, 2], color: '#d93b2f' },
-      { indices: [5, 4, 7, 6], color: '#45d0c0' },
-      { indices: [4, 0, 3, 7], color: '#9b7bfd' },
-      { indices: [3, 2, 6, 7], color: '#ffb36c' },
-      { indices: [0, 4, 5, 1], color: '#58a8ff' }
-    ];
-
-    const projectedFaces = faces
-      .map((face) => ({
-        ...face,
-        points: face.indices.map((index) => this.project(cubeVerts[index])),
-        depth: face.indices.reduce((sum, index) => sum + cubeVerts[index].z, 0) / face.indices.length
-      }))
-      .sort((a, b) => b.depth - a.depth);
-
-    ctx.save();
-    projectedFaces.forEach((face) => {
-      ctx.beginPath();
-      face.points.forEach((point, index) => {
-        if (index === 0) ctx.moveTo(point.x, point.y);
-        else ctx.lineTo(point.x, point.y);
-      });
-      ctx.closePath();
-      ctx.fillStyle = face.color;
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(17,20,28,0.7)';
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-    });
-
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = 'bold 9px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(this.currentValue), this.x, this.y - this.z * 0.8);
-    ctx.restore();
-  }
-}
-
-function updateDiceEngine() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  let motion = false;
-
-  diceArray.forEach((die) => {
-    die.update();
-    die.draw();
-    if (!die.isSettled || Math.abs(die.vx) > 0.01 || Math.abs(die.vy) > 0.01 || Math.abs(die.vz) > 0.01) {
-      motion = true;
-    }
-  });
-
-  if (isRolling || motion) {
-    animationId = requestAnimationFrame(updateDiceEngine);
-  } else {
-    animationId = null;
-  }
-}
 
 function startRollSequence() {
   if (isRolling) return;
   isRolling = true;
 
   document.getElementById('arena-prompt').style.display = 'none';
-  const button = document.getElementById('roll-button');
-  button.disabled = true;
-  button.innerText = 'ROLLING...';
-
-  const card = document.querySelector('.character-card');
-  if (card) {
-    card.classList.remove('is-rolling');
-    void card.offsetWidth;
-    card.classList.add('is-rolling');
-  }
-
-  diceArray = [];
-  for (let i = 0; i < 5; i++) {
-    diceArray.push(new BirdEyeDice(55 + (i * 58), 60));
-  }
-
-  if (animationId) cancelAnimationFrame(animationId);
-  updateDiceEngine();
-
-  let cycles = 0;
-  const maxCycles = 20;
-  const shuffleInterval = setInterval(() => {
-    const randomName = getRandomItem(prefixes) + getRandomItem(suffixes);
-    const randomClass = getRandomItem(classesData);
-    const randomWeapon = getRandomItem(weaponsData);
-    const randomElement = getRandomItem(elementMatrix);
-    const rollingPower = Math.floor(Math.random() * 600) + 120;
-
-    document.getElementById('hero-name').innerText = randomName;
-    document.getElementById('stat-Class').innerText = randomClass.name;
-    document.getElementById('hero-class-desc').innerText = randomClass.desc;
-    document.getElementById('stat-Weapon').innerText = randomWeapon.name;
-    setStatValue('Age', Math.floor(Math.random() * 950) + 10, 1000);
-    document.getElementById('stat-Element').innerText = Math.random() > 0.8 ? randomElement.sr : randomElement.core;
-    setStatValue('Health', Math.floor(Math.random() * 250) + 20, 300);
-    setStatValue('Attack', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Defense', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Regeneration', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Speed', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Critical', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Luck', Math.floor(Math.random() * 80) + 10, 100);
-    setStatValue('Focus', Math.floor(Math.random() * 80) + 10, 100);
-
-    rollingPreviewEntry = {
-      name: randomName,
-      subLabel: `${randomClass.name} • ${randomElement.core}`,
-      power: rollingPower,
-      rarity: 'rolling',
-      isRolling: true,
-      summary: `${randomWeapon.name} • ${randomElement.core}`
-    };
-
-    historyEntries = [rollingPreviewEntry, ...historyEntries.filter((entry) => !entry.isRolling)].slice(0, 12);
-    renderHistoryPage();
-
-    cycles += 1;
-    if (cycles >= maxCycles) {
-      clearInterval(shuffleInterval);
-      finalizeCharacter();
-    }
-  }, 60);
+  finalizeCharacter();
 }
 
 function finalizeCharacter() {
@@ -653,27 +432,10 @@ function finalizeCharacter() {
 
   addHeroToHistory(`${variantName} ${finalName}`, selectedClass.name, finalElementName, isSR, isSSR, totalCombatPower, renderTier, finalWeaponObj.name, renderRank);
 
-  diceArray.forEach((die) => {
-    die.isSettled = true;
-    die.vx = 0;
-    die.vy = 0;
-    die.vz = 0;
-    die.x = die.baseX;
-    die.y = die.baseY;
-    die.z = 0;
-    die.rollX = 0;
-    die.rollY = 0;
-    die.rollZ = 0;
-  });
-
   const button = document.getElementById('roll-button');
   button.disabled = false;
   button.innerText = 'PRESS SPACE TO ROLL';
   isRolling = false;
-  const card = document.querySelector('.character-card');
-  if (card) card.classList.remove('is-rolling');
-  if (animationId) cancelAnimationFrame(animationId);
-  updateDiceEngine();
   saveGameState();
 }
 
