@@ -450,7 +450,7 @@ function loadGameState() {
     if (!raw) return;
     const state = JSON.parse(raw);
     if (typeof state.highestPowerEver === 'number') highestPowerEver = state.highestPowerEver;
-    if (Array.isArray(state.history)) historyEntries = state.history;
+    if (Array.isArray(state.history)) historyEntries = state.history.slice(0, 6);
 
     if (state.currentHero) {
       renderHeroCard({ ...getDefaultHeroState(), ...state.currentHero, tierClass: state.currentHero.tierClass || 'rarity-common', isEx: Boolean(state.currentHero.isEx), isSR: Boolean(state.currentHero.isSR), isSSR: Boolean(state.currentHero.isSSR), arenaPromptVisible: state.currentHero.arenaPromptVisible !== false });
@@ -529,7 +529,7 @@ function startRollSequence() {
       summary: `${randomWeapon.name} • ${randomElement.core}`
     };
 
-    historyEntries = [previewEntry, ...historyEntries.filter((entry) => !entry.isRolling)].slice(0, 12);
+    historyEntries = [previewEntry, ...historyEntries.filter((entry) => !entry.isRolling)].slice(0, 6);
     renderHistoryPage();
 
     cycle += 1;
@@ -692,7 +692,7 @@ function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, 
     rank,
     summary: `${weapon} • ${subLabel}`
   });
-  historyEntries = historyEntries.slice(0, 12);
+  historyEntries = historyEntries.slice(0, 6);
   renderHistoryPage();
   saveGameState();
 }
@@ -714,7 +714,7 @@ document.getElementById('hero-code-input')?.addEventListener('input', (event) =>
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.key === '`' || event.key === '~') {
+  if (event.code === 'Backquote') {
     event.preventDefault();
     toggleCodePage();
   }
