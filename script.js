@@ -148,6 +148,14 @@ function saveGameState() {
       element: document.getElementById('eq-element').innerText,
       weapon: document.getElementById('eq-weapon').innerText,
       age: document.getElementById('eq-age').innerText,
+      health: document.getElementById('eq-health').innerText,
+      attack: document.getElementById('eq-attack').innerText,
+      defense: document.getElementById('eq-defense').innerText,
+      regeneration: document.getElementById('eq-regeneration').innerText,
+      speed: document.getElementById('eq-speed').innerText,
+      critical: document.getElementById('eq-critical').innerText,
+      luck: document.getElementById('eq-luck').innerText,
+      focus: document.getElementById('eq-focus').innerText,
       power: strongestPower ? strongestPower.innerText : '',
       tierClass: strongestPower ? strongestPower.classList.value.replace('eq-power-value', '').trim() || 'rarity-common' : 'rarity-common'
     } : null,
@@ -298,6 +306,14 @@ function renderStrongestHero(hero) {
   document.getElementById('eq-element').innerText = hero.element;
   document.getElementById('eq-weapon').innerText = hero.weapon;
   document.getElementById('eq-age').innerText = hero.age;
+  document.getElementById('eq-health').innerText = hero.health || '-';
+  document.getElementById('eq-attack').innerText = hero.attack || '-';
+  document.getElementById('eq-defense').innerText = hero.defense || '-';
+  document.getElementById('eq-regeneration').innerText = hero.regeneration || '-';
+  document.getElementById('eq-speed').innerText = hero.speed || '-';
+  document.getElementById('eq-critical').innerText = hero.critical || '-';
+  document.getElementById('eq-luck').innerText = hero.luck || '-';
+  document.getElementById('eq-focus').innerText = hero.focus || '-';
   document.getElementById('eq-power').innerText = hero.power;
   document.getElementById('eq-power').className = 'eq-power-value ' + (hero.tierClass || 'rarity-common');
   document.getElementById('eq-name').className = 'eq-hero-name ' + (hero.tierClass || 'rarity-common');
@@ -558,6 +574,14 @@ function finalizeCharacter() {
     element: finalElementName,
     weapon: finalWeaponObj.name,
     age: `${finalAge} yrs`,
+    health: hp,
+    attack: atk,
+    defense: def,
+    regeneration: reg,
+    speed,
+    critical: crit,
+    luck,
+    focus,
     power: totalCombatPower,
     tierClass: renderTier
   };
