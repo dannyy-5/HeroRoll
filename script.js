@@ -320,83 +320,89 @@ function getRandomVariantName(type) {
 
 class BirdEyeDice {
   constructor(x, y) {
+    this.baseX = x;
+    this.baseY = y;
     this.x = x;
     this.y = y;
-    this.size = 20;
-    this.vx = (Math.random() * 12) - 6;
-    this.vy = -(Math.random() * 10 + 9);
-    this.rotationX = Math.random() * Math.PI * 2;
-    this.rotationY = Math.random() * Math.PI * 2;
-    this.rotationZ = Math.random() * Math.PI * 2;
-    this.spinX = (Math.random() * 0.45) - 0.22;
-    this.spinY = (Math.random() * 0.45) - 0.22;
-    this.spinZ = (Math.random() * 0.9) - 0.45;
-    this.gravity = 0.72;
-    this.groundY = canvas.height - 18;
+    this.z = 0;
+    this.size = 18;
+    this.vx = (Math.random() * 7) - 3.5;
+    this.vy = (Math.random() * 7) - 3.5;
+    this.vz = 7 + Math.random() * 6;
+    this.spinX = (Math.random() * 0.8) - 0.4;
+    this.spinY = (Math.random() * 0.8) - 0.4;
+    this.spinZ = (Math.random() * 1.2) - 0.6;
+    this.rollX = Math.random() * Math.PI * 2;
+    this.rollY = Math.random() * Math.PI * 2;
+    this.rollZ = Math.random() * Math.PI * 2;
     this.currentValue = Math.floor(Math.random() * 6) + 1;
     this.isSettled = false;
-    this.valueFace = this.currentValue;
-    this.depth = 0;
   }
 
   rotatePoint(point) {
     const { x, y, z } = point;
-    let rx = x;
-    let ry = y * Math.cos(this.rotationX) - z * Math.sin(this.rotationX);
-    let rz = y * Math.sin(this.rotationX) + z * Math.cos(this.rotationX);
-    let x2 = rx * Math.cos(this.rotationY) + rz * Math.sin(this.rotationY);
-    let z2 = -rx * Math.sin(this.rotationY) + rz * Math.cos(this.rotationY);
-    let x3 = x2 * Math.cos(this.rotationZ) - ry * Math.sin(this.rotationZ);
-    let y3 = x2 * Math.sin(this.rotationZ) + ry * Math.cos(this.rotationZ);
+    const x1 = x * Math.cos(this.rollY) + z * Math.sin(this.rollY);
+    const z1 = -x * Math.sin(this.rollY) + z * Math.cos(this.rollY);
+    const y2 = y * Math.cos(this.rollX) - z1 * Math.sin(this.rollX);
+    const z2 = y * Math.sin(this.rollX) + z1 * Math.cos(this.rollX);
+    const x3 = x1 * Math.cos(this.rollZ) - y2 * Math.sin(this.rollZ);
+    const y3 = x1 * Math.sin(this.rollZ) + y2 * Math.cos(this.rollZ);
     return { x: x3, y: y3, z: z2 };
   }
 
   project(point) {
-    const camera = 280;
-    const scale = camera / (camera - point.z);
+    const perspective = 200;
+    const scale = perspective / (perspective + point.z + 100);
     return {
-      x: this.x + point.x * scale * this.size,
-      y: this.y + point.y * scale * this.size,
-      z: point.z,
-      scale
+      x: this.x + point.x * this.size * scale,
+      y: this.y + point.y * this.size * scale - (this.z * 1.4),
+      z: point.z
     };
   }
 
   update() {
+    if (this.isSettled) {
+      this.x += (this.baseX - this.x) * 0.16;
+      this.y += (this.baseY - this.y) * 0.16;
+      this.rollX += (0 - this.rollX) * 0.1;
+      this.rollY += (0 - this.rollY) * 0.1;
+      this.rollZ += (0 - this.rollZ) * 0.08;
+      return;
+    }
+
     this.x += this.vx;
     this.y += this.vy;
-    this.vy += this.gravity;
-    this.rotationX += this.spinX;
-    this.rotationY += this.spinY;
-    this.rotationZ += this.spinZ;
+    this.z += this.vz;
+    this.vx *= 0.984;
+    this.vy *= 0.984;
+    this.vz -= 0.42;
+    this.rollX += this.spinX;
+    this.rollY += this.spinY;
+    this.rollZ += this.spinZ;
 
-    if (this.x < this.size) {
-      this.x = this.size;
-      this.vx *= -0.6;
-    }
-    if (this.x > canvas.width - this.size) {
-      this.x = canvas.width - this.size;
-      this.vx *= -0.6;
-    }
+    if (this.x > this.baseX + 38) { this.x = this.baseX + 38; this.vx *= -0.5; }
+    if (this.x < this.baseX - 38) { this.x = this.baseX - 38; this.vx *= -0.5; }
+    if (this.y > this.baseY + 28) { this.y = this.baseY + 28; this.vy *= -0.5; }
+    if (this.y < this.baseY - 28) { this.y = this.baseY - 28; this.vy *= -0.5; }
 
-    if (this.y >= this.groundY) {
-      this.y = this.groundY;
-      this.vy *= -0.46;
-      this.vx *= 0.98;
-      this.spinZ *= 0.84;
+    if (this.z <= 0) {
+      this.z = 0;
+      this.vz *= -0.32;
       this.currentValue = Math.floor(Math.random() * 6) + 1;
-      if (Math.abs(this.vy) < 0.8) {
-        this.vy = 0;
+
+      if (Math.abs(this.vz) < 0.36 && Math.abs(this.vx) < 0.2 && Math.abs(this.vy) < 0.2) {
         this.isSettled = true;
+        this.vx = 0;
+        this.vy = 0;
+        this.vz = 0;
+        this.x = this.baseX;
+        this.y = this.baseY;
       }
     }
-
-    this.depth = this.y;
   }
 
   draw() {
-    const size = this.size;
-    const verts = [
+    const cubeVerts = [
       { x: -1, y: -1, z: -1 },
       { x: 1, y: -1, z: -1 },
       { x: 1, y: 1, z: -1 },
@@ -408,25 +414,23 @@ class BirdEyeDice {
     ].map((v) => this.rotatePoint(v));
 
     const faces = [
-      { indices: [0, 1, 2, 3], color: '#f7c84b', label: '4' },
-      { indices: [1, 5, 6, 2], color: '#d93b2f', label: '5' },
-      { indices: [5, 4, 7, 6], color: '#5fe3d7', label: '2' },
-      { indices: [4, 0, 3, 7], color: '#9e7bff', label: '3' },
-      { indices: [3, 2, 6, 7], color: '#ff8a5b', label: '1' },
-      { indices: [0, 4, 5, 1], color: '#3db4ff', label: '6' }
+      { indices: [0, 1, 2, 3], color: '#f7c84b' },
+      { indices: [1, 5, 6, 2], color: '#d93b2f' },
+      { indices: [5, 4, 7, 6], color: '#45d0c0' },
+      { indices: [4, 0, 3, 7], color: '#9b7bfd' },
+      { indices: [3, 2, 6, 7], color: '#ffb36c' },
+      { indices: [0, 4, 5, 1], color: '#58a8ff' }
     ];
 
     const projectedFaces = faces
-      .map((face) => {
-        const points = face.indices.map((index) => this.project(verts[index]));
-        const avgZ = points.reduce((total, point) => total + point.z, 0) / points.length;
-        return { ...face, points, avgZ };
-      })
-      .sort((a, b) => b.avgZ - a.avgZ);
+      .map((face) => ({
+        ...face,
+        points: face.indices.map((index) => this.project(cubeVerts[index])),
+        depth: face.indices.reduce((sum, index) => sum + cubeVerts[index].z, 0) / face.indices.length
+      }))
+      .sort((a, b) => b.depth - a.depth);
 
     ctx.save();
-    ctx.translate(0, 0);
-
     projectedFaces.forEach((face) => {
       ctx.beginPath();
       face.points.forEach((point, index) => {
@@ -436,20 +440,16 @@ class BirdEyeDice {
       ctx.closePath();
       ctx.fillStyle = face.color;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(20, 20, 30, 0.7)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(17,20,28,0.7)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
-
-      const center = face.points.reduce((sum, point) => ({ x: sum.x + point.x, y: sum.y + point.y }), { x: 0, y: 0 });
-      const cx = center.x / face.points.length;
-      const cy = center.y / face.points.length;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(face.label, cx, cy);
     });
 
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(this.currentValue), this.x, this.y - this.z * 0.8);
     ctx.restore();
   }
 }
@@ -461,7 +461,7 @@ function updateDiceEngine() {
   diceArray.forEach((die) => {
     die.update();
     die.draw();
-    if (!die.isSettled || Math.abs(die.vy) > 0.05 || Math.abs(die.vx) > 0.05) {
+    if (!die.isSettled || Math.abs(die.vx) > 0.01 || Math.abs(die.vy) > 0.01 || Math.abs(die.vz) > 0.01) {
       motion = true;
     }
   });
@@ -491,7 +491,7 @@ function startRollSequence() {
 
   diceArray = [];
   for (let i = 0; i < 5; i++) {
-    diceArray.push(new BirdEyeDice(35 + (i * 70), 20 + (Math.random() * 20)));
+    diceArray.push(new BirdEyeDice(55 + (i * 58), 60));
   }
 
   if (animationId) cancelAnimationFrame(animationId);
