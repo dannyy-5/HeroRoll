@@ -233,24 +233,7 @@ function renderStrongestHero(hero) {
 }
 
 function renderHistoryList() {
-  const list = document.getElementById('history-list');
-  if (list) {
-    list.innerHTML = '';
-    if (!historyEntries.length) {
-      list.innerHTML = '<div class="history-empty">No local heroes rolled yet...</div>';
-      return;
-    }
-    historyEntries.forEach((entry) => {
-      const item = document.createElement('div');
-      item.className = 'history-item';
-      item.innerHTML = `
-        <div class="hist-name">${entry.name}</div>
-        <div class="hist-sub">${entry.subLabel}</div>
-        <div class="hist-power ${entry.rarity}">${entry.power}</div>
-      `;
-      list.appendChild(item);
-    });
-  }
+  renderHistoryPage();
 }
 
 function updatePlayerHUD() {
@@ -282,6 +265,14 @@ function renderHistoryPage() {
     `;
     list.appendChild(item);
   });
+}
+
+function setStatValue(statKey, value, maxValue) {
+  const valueEl = document.getElementById(`stat-${statKey}`);
+  const maxEl = document.getElementById(`stat-${statKey}-max`);
+
+  if (valueEl) valueEl.textContent = value;
+  if (maxEl) maxEl.textContent = `Max ${maxValue}`;
 }
 
 function loadGameState() {
@@ -330,17 +321,15 @@ class BirdEyeDice {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.size = 20;
-    this.vx = (Math.random() * 11) - 5.5;
-    this.vy = -(Math.random() * 10 + 8);
+    this.size = 22;
+    this.vx = (Math.random() * 12) - 6;
+    this.vy = -(Math.random() * 10 + 9);
     this.angle = Math.random() * Math.PI * 2;
-    this.spinX = (Math.random() * 0.28) - 0.14;
-    this.spinY = (Math.random() * 0.28) - 0.14;
-    this.spinZ = (Math.random() * 0.8) - 0.4;
+    this.spinZ = (Math.random() * 0.9) - 0.45;
     this.height = 0;
-    this.gravity = 0.7;
+    this.gravity = 0.72;
     this.currentValue = Math.floor(Math.random() * 6) + 1;
-    this.groundY = canvas.height - 28;
+    this.groundY = canvas.height - 18;
     this.isSettled = false;
   }
 
@@ -363,58 +352,97 @@ class BirdEyeDice {
       this.y = this.groundY;
       this.vy *= -0.42;
       this.vx *= 0.96;
-      this.spinZ *= 0.9;
+      this.spinZ *= 0.8;
       this.currentValue = Math.floor(Math.random() * 6) + 1;
 
-      if (Math.abs(this.vy) < 0.8) {
+      if (Math.abs(this.vy) < 0.75) {
         this.vy = 0;
         this.isSettled = true;
       }
     }
 
     this.height = Math.max(0, this.groundY - this.y);
-    this.spinX *= 0.98;
-    this.spinY *= 0.98;
   }
 
   draw() {
+    const s = this.size;
+    const x = this.x;
+    const y = this.y;
+    const lift = this.height * 0.55;
+
     ctx.save();
-    ctx.translate(this.x, this.y - this.height * 0.55);
+    ctx.translate(x, y - lift);
     ctx.rotate(this.angle);
-    ctx.scale(1, 1 - (this.height / 180));
 
-    const side = this.size;
-    const shade = this.height > 0 ? 0.75 : 1;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.beginPath();
+    ctx.ellipse(0, s * 1.1, s * 1.35, s * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    ctx.fillStyle = `rgba(0, 0, 0, ${0.2 + this.height / 220})`;
-    ctx.fillRect(side * 0.28, side * 0.22, side, side);
+    const top = [
+      { x: 0, y: -s * 0.9 },
+      { x: s * 0.78, y: -s * 0.45 },
+      { x: 0, y: s * 0.15 },
+      { x: -s * 0.78, y: -s * 0.45 }
+    ];
+    const right = [
+      { x: s * 0.78, y: -s * 0.45 },
+      { x: s * 1.1, y: 0.1 },
+      { x: s * 1.1, y: s * 0.85 },
+      { x: 0, y: s * 0.15 }
+    ];
+    const left = [
+      { x: -s * 0.78, y: -s * 0.45 },
+      { x: 0, y: s * 0.15 },
+      { x: -s * 1.1, y: s * 0.85 },
+      { x: -s * 1.1, y: 0.1 }
+    ];
 
-    ctx.fillStyle = '#c72626';
-    ctx.strokeStyle = '#5a0f0f';
-    ctx.lineWidth = 1.5;
-    ctx.fillRect(-side / 2, -side / 2, side, side);
-    ctx.strokeRect(-side / 2, -side / 2, side, side);
+    ctx.beginPath();
+    ctx.moveTo(top[0].x, top[0].y);
+    top.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+    ctx.closePath();
+    ctx.fillStyle = '#f7c84b';
+    ctx.fill();
+    ctx.strokeStyle = '#c89320';
+    ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.16)';
-    ctx.fillRect(-side / 2 + 3, -side / 2 + 3, side * 0.5, side * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(right[0].x, right[0].y);
+    right.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+    ctx.closePath();
+    ctx.fillStyle = '#d93b2f';
+    ctx.fill();
+    ctx.strokeStyle = '#8b1d1a';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(left[0].x, left[0].y);
+    left.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+    ctx.closePath();
+    ctx.fillStyle = '#9d1b1b';
+    ctx.fill();
+    ctx.strokeStyle = '#611111';
+    ctx.stroke();
 
     ctx.fillStyle = '#fff';
-    const offset = side / 4;
+    const pipRadius = 2.5;
+    const pipOffset = s * 0.22;
     const val = this.currentValue;
+    const pipMap = {
+      1: [[0, 0]],
+      2: [[-pipOffset, -pipOffset], [pipOffset, pipOffset]],
+      3: [[0, 0], [-pipOffset, -pipOffset], [pipOffset, pipOffset]],
+      4: [[-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, pipOffset], [pipOffset, pipOffset]],
+      5: [[0, 0], [-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, pipOffset], [pipOffset, pipOffset]],
+      6: [[-pipOffset, -pipOffset], [pipOffset, -pipOffset], [-pipOffset, 0], [pipOffset, 0], [-pipOffset, pipOffset], [pipOffset, pipOffset]]
+    };
 
-    if (val === 1 || val === 3 || val === 5) drawPip(0, 0);
-    if (val === 2 || val === 3 || val === 4 || val === 5 || val === 6) {
-      drawPip(-offset, -offset);
-      drawPip(offset, offset);
-    }
-    if (val === 4 || val === 5 || val === 6) {
-      drawPip(offset, -offset);
-      drawPip(-offset, offset);
-    }
-    if (val === 6) {
-      drawPip(-offset, 0);
-      drawPip(offset, 0);
-    }
+    (pipMap[val] || pipMap[1]).forEach(([px, py]) => {
+      ctx.beginPath();
+      ctx.arc(px, py, pipRadius, 0, Math.PI * 2);
+      ctx.fill();
+    });
 
     ctx.restore();
   }
@@ -422,7 +450,7 @@ class BirdEyeDice {
 
 function drawPip(x, y) {
   ctx.beginPath();
-  ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+  ctx.arc(x, y, 2, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -554,17 +582,18 @@ function finalizeCharacter() {
   document.getElementById('hero-name').innerText = `${variantName} ${finalName}`;
   document.getElementById('stat-Class').innerText = selectedClass.name;
   document.getElementById('hero-class-desc').innerText = selectedClass.desc;
-  document.getElementById('stat-Age').innerText = finalAge;
   document.getElementById('stat-Weapon').innerText = `${finalWeaponObj.name} (+${finalWeaponObj.bonus} Power)`;
   document.getElementById('stat-Element').innerText = finalElementName;
-  document.getElementById('stat-Health').innerText = hp;
-  document.getElementById('stat-Attack').innerText = atk;
-  document.getElementById('stat-Defense').innerText = def;
-  document.getElementById('stat-Regeneration').innerText = reg;
-  document.getElementById('stat-Speed').innerText = speed;
-  document.getElementById('stat-Critical').innerText = crit;
-  document.getElementById('stat-Luck').innerText = luck;
-  document.getElementById('stat-Focus').innerText = focus;
+
+  setStatValue('Age', finalAge, 1000);
+  setStatValue('Health', hp, 300);
+  setStatValue('Attack', atk, 100);
+  setStatValue('Defense', def, 100);
+  setStatValue('Regeneration', reg, 100);
+  setStatValue('Speed', speed, 100);
+  setStatValue('Critical', crit, 100);
+  setStatValue('Luck', luck, 100);
+  setStatValue('Focus', focus, 100);
 
   const tBadge = document.getElementById('element-tier');
   tBadge.dataset.rank = renderRank;
@@ -633,7 +662,7 @@ function addHeroToHistory(name, charClass, element, isSR, isSSR, power, rarity, 
     summary: `${weapon} • ${subLabel}`
   });
   historyEntries = historyEntries.slice(0, 12);
-  renderHistoryList();
+  renderHistoryPage();
   saveGameState();
 }
 
